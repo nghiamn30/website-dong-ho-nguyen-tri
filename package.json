@@ -1,0 +1,22 @@
+{
+  "name": "website-dong-ho-nguyen-tri",
+  "private": true,
+  "packageManager": "pnpm@10.32.1",
+  "scripts": {
+    "web:dev": "pnpm --dir web dev",
+    "web:build": "pnpm --dir web build",
+    "web:lint": "pnpm --dir web lint",
+    "web:test": "pnpm --dir web test",
+    "backend:dev": "pnpm --dir backend start:dev",
+    "backend:build": "pnpm --dir backend build",
+    "backend:lint": "pnpm --dir backend lint",
+    "backend:test": "pnpm --dir backend test",
+    "backend:test:e2e": "pnpm --dir backend test:e2e",
+    "db:init": "powershell -ExecutionPolicy Bypass -File scripts/init-db.ps1",
+    "db:backup": "powershell -ExecutionPolicy Bypass -File scripts/backup-db.ps1",
+    "db:restore": "powershell -ExecutionPolicy Bypass -File scripts/restore-db.ps1",
+    "lint": "pnpm web:lint && pnpm backend:lint",
+    "test": "pnpm web:test && pnpm backend:test",
+    "build": "pnpm web:build && pnpm backend:build"
+  }
+}

@@ -1,0 +1,10 @@
+**/node_modules
+**/.next
+**/dist
+**/coverage
+backend/src/generated/prisma
+**/.git
+**/*.log
+.env
+web/.env
+backend/.env

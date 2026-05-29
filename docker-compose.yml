@@ -1,0 +1,115 @@
+name: website-dong-ho-nguyen-tri
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: dong_ho_nguyen_tri_postgres
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-dong_ho_nguyen_tri}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-dong_ho_nguyen_tri}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: builder
+    container_name: dong_ho_nguyen_tri_migrate
+    restart: "no"
+    env_file:
+      - ./.env
+    command:
+      - sh
+      - -c
+      - |
+        echo 'Waiting for PostgreSQL schema target...' &&
+        pnpm prisma migrate deploy &&
+        echo 'Database schema is ready.'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: dong_ho_nguyen_tri_backend
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3001
+      DB_HOST: postgres
+    command: ["node", "dist/main.js"]
+    ports:
+      - "${LAN_BIND_ADDRESS:-0.0.0.0}:${BACKEND_PORT:-3001}:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3001/api || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 180s
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+    container_name: dong_ho_nguyen_tri_web
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+    ports:
+      - "${LAN_BIND_ADDRESS:-0.0.0.0}:${WEB_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/login || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  postgres_data:
+    name: dong_ho_nguyen_tri_postgres_data
+
+networks:
+  app_network:
+    name: dong_ho_nguyen_tri_network
+    driver: bridge
