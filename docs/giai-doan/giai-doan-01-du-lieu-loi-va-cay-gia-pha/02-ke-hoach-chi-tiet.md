@@ -10,14 +10,14 @@ Sau giai đoạn này, hệ thống có dữ liệu lõi để quản lý dòng 
 - Giai đoạn này xây mới các module nghiệp vụ lõi, không xây lịch giỗ, bài viết, album hoặc kiểm duyệt nâng cao.
 - Thông tin cá nhân trong gia phả được xem bởi mọi người, không phân quyền đọc.
 - Phân quyền chỉ áp dụng cho thao tác quản trị dữ liệu.
-- Cần đánh giá React Flow trước khi chốt thư viện hiển thị phả đồ.
+- Quyết định G01-M01: chưa dùng React Flow trong giai đoạn 1; phả đồ dùng React/CSS phân cấp, không thêm dependency mới.
 - Vai trò áp dụng: admin, trưởng họ, trưởng chi, người bình thường.
 
 ## 3. Các mốc công việc trong giai đoạn
 
 | Mốc | Nội dung trọng tâm | Kết quả cần đạt |
 |---|---|---|
-| G01-M01 | Chốt dữ liệu lõi và giải pháp phả đồ | Có schema nghiệp vụ và quyết định dùng/không dùng React Flow |
+| G01-M01 | Chốt dữ liệu lõi và giải pháp phả đồ | Có schema nghiệp vụ và quyết định chưa dùng React Flow ở giai đoạn 1 |
 | G01-M02 | Triển khai database và seed quyền | Có migration, index, enum và 4 role nghiệp vụ |
 | G01-M03 | Triển khai backend API lõi | API dòng họ, chi/nhánh, thành viên, quan hệ và phả đồ hoạt động |
 | G01-M04 | Triển khai giao diện quản trị | Quản trị nhập được dữ liệu phả hệ ban đầu |
@@ -31,8 +31,9 @@ Sau giai đoạn này, hệ thống có dữ liệu lõi để quản lý dòng 
 - Chốt model `Clan`, `Branch`, `Person`, `Relationship`.
 - Chốt `founder_person_id` để xác định thủy tổ.
 - Chốt `head_person_id` hoặc `is_branch_head` để xác định người đứng đầu chi/nhánh.
-- Đánh giá React Flow bằng prototype nhỏ.
-- Ghi quyết định kỹ thuật: dùng React Flow, dùng thư viện khác hoặc tự render có kiểm soát.
+- Chốt chưa dùng React Flow ở giai đoạn 1 để giữ dependency gọn và giảm rủi ro khi dữ liệu còn nhỏ.
+- Triển khai phả đồ bằng React/CSS phân cấp có kiểm soát.
+- Ghi lại điều kiện xem xét React Flow ở giai đoạn sau: cây lớn, cần zoom/pan nâng cao, kéo thả node hoặc export phức tạp.
 
 ### G01-M02 - Database và quyền
 
@@ -112,7 +113,7 @@ Màn hình cần có:
 - Migration dữ liệu lõi.
 - API nghiệp vụ giai đoạn 1.
 - UI quản trị và xem phả đồ.
-- Quyết định React Flow.
+- Quyết định chưa dùng React Flow trong giai đoạn 1.
 - Seed role/permission nghiệp vụ.
 - Checklist nghiệm thu hoàn tất.
 
@@ -123,4 +124,3 @@ Màn hình cần có:
 - Bài viết, album, tài liệu.
 - Quy trình duyệt nâng cao.
 - Xuất PDF/ảnh, QR code, tra cứu xưng hô.
-

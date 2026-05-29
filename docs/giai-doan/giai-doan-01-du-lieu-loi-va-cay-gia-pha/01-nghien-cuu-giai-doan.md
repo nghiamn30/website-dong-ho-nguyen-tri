@@ -125,12 +125,12 @@ Quyết định quan trọng của giai đoạn này:
 4. `Branch.head_person_id` hoặc `Person.is_branch_head` được dùng để đánh dấu người đứng đầu chi/nhánh, làm nền cho lịch nhắc ở giai đoạn 2.
 5. Thông tin cá nhân trong gia phả được xem công khai trong hệ thống, không phân quyền đọc theo vai trò.
 6. Các thao tác ghi dữ liệu phải có permission và audit log.
-7. Cần đánh giá React Flow trước khi thêm dependency:
+7. Quyết định G01-M01: chưa dùng React Flow trong giai đoạn 1. Phả đồ được render bằng React/CSS phân cấp để giữ dependency gọn và đủ đáp ứng nhập dữ liệu ban đầu.
+8. React Flow sẽ được xem lại ở giai đoạn sau nếu phát sinh nhu cầu:
    - Render cây nhiều node.
    - Zoom/pan.
    - Custom node hiển thị thông tin thành viên.
    - Edge thể hiện quan hệ.
    - Lazy loading hoặc giới hạn render khi cây lớn.
    - Khả năng phục vụ export ở giai đoạn sau.
-8. Nếu React Flow không đáp ứng cây phả hệ lớn, cần ghi rõ phương án thay thế trước khi triển khai UI chính thức.
-
+9. Nếu cần chuyển sang React Flow hoặc thư viện khác, phải có prototype và tiêu chí hiệu năng trước khi thêm dependency.

@@ -19,8 +19,12 @@ describe("navigation", () => {
   it("filters navigation by permissions", () => {
     const visible = getVisibleNavigation([PERMISSIONS.DASHBOARD_VIEW]);
 
-    expect(visible).toHaveLength(1);
+    expect(visible).toHaveLength(2);
     expect(visible[0]?.items.map((item) => item.href)).toEqual(["/dashboard"]);
+    expect(visible[1]?.items.map((item) => item.href)).toEqual([
+      "/family-tree",
+      "/people",
+    ]);
   });
 
   it("resolves titles for known and unknown routes", () => {

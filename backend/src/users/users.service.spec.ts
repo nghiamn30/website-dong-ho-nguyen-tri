@@ -42,7 +42,7 @@ describe('UsersService delete', () => {
       employeeCode: 'USER001',
       name: 'Người dùng kiểm thử',
       password: 'secret123',
-      roleCode: ROLE_CODES.OPERATOR,
+      roleCode: ROLE_CODES.NGUOI_BINH_THUONG,
     });
 
     await expect(
@@ -59,7 +59,7 @@ describe('UsersService delete', () => {
       employeeCode: 'USER001',
       name: 'Người dùng kiểm thử',
       password: 'secret123',
-      roleCode: ROLE_CODES.OPERATOR,
+      roleCode: ROLE_CODES.NGUOI_BINH_THUONG,
     });
 
     await expect(service.deleteUser('USER001', adminActor)).resolves.toEqual({

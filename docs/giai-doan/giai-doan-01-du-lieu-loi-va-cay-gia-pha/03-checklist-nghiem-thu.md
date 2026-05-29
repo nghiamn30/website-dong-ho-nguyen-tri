@@ -2,7 +2,7 @@
 
 ## 1. Điều kiện trước nghiệm thu
 
-- [ ] Đã có quyết định dùng hoặc không dùng React Flow.
+- [ ] Đã có quyết định chưa dùng React Flow trong giai đoạn 1.
 - [ ] Đã chốt thủy tổ là node gốc của phả đồ toàn họ.
 - [ ] Đã chốt 4 role: admin, trưởng họ, trưởng chi, người bình thường.
 - [ ] Đã chốt thông tin cá nhân trong gia phả không phân quyền đọc.
@@ -70,4 +70,3 @@
 - [ ] Quản trị tạo được dòng họ, chi/nhánh, thành viên và quan hệ.
 - [ ] Người dùng xem được cây phả hệ và hồ sơ cá nhân.
 - [ ] Dữ liệu đủ ổn định để triển khai lịch giỗ ở giai đoạn 2.
-

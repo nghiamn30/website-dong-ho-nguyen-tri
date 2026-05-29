@@ -1,7 +1,7 @@
 import { apiRequest } from "@/lib/auth";
 
 export interface UserRole {
-  code: "ADMIN" | "OPERATOR" | "AUDITOR";
+  code: "ADMIN" | "TRUONG_HO" | "TRUONG_CHI" | "NGUOI_BINH_THUONG";
   name: string;
   permissions: string[];
 }

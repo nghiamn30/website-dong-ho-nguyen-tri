@@ -58,6 +58,150 @@ model UserRole {
   @@map("user_roles")
 }
 
+enum BranchStatus {
+  ACTIVE
+  ARCHIVED
+
+  @@map("branch_status")
+}
+
+enum CalendarType {
+  SOLAR
+  LUNAR
+
+  @@map("calendar_type")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  UNKNOWN
+
+  @@map("gender")
+}
+
+enum LifeStatus {
+  LIVING
+  DECEASED
+  UNKNOWN
+
+  @@map("life_status")
+}
+
+enum RelationshipType {
+  FATHER
+  MOTHER
+  SPOUSE
+  CHILD
+  ADOPTED_CHILD
+
+  @@map("relationship_type")
+}
+
+model Clan {
+  id                    String   @id @default(uuid()) @db.Uuid
+  name                  String   @db.VarChar(180)
+  description           String?
+  history               String?
+  founderPersonId       String?  @map("founder_person_id") @db.Uuid
+  logoUrl               String?  @map("logo_url")
+  bannerUrl             String?  @map("banner_url")
+  ancestralHouseName    String?  @map("ancestral_house_name") @db.VarChar(180)
+  ancestralHouseAddress String?  @map("ancestral_house_address")
+  contactInformation    String?  @map("contact_information")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  branches      Branch[] @relation("ClanBranches")
+  founderPerson Person?  @relation("ClanFounder", fields: [founderPersonId], references: [id], onDelete: SetNull)
+  persons       Person[] @relation("ClanPersons")
+
+  @@index([founderPersonId])
+  @@map("clans")
+}
+
+model Branch {
+  id             String       @id @default(uuid()) @db.Uuid
+  clanId         String       @map("clan_id") @db.Uuid
+  parentBranchId String?      @map("parent_branch_id") @db.Uuid
+  name           String       @db.VarChar(180)
+  type           String       @default("Chi") @db.VarChar(80)
+  description    String?
+  headPersonId   String?      @map("head_person_id") @db.Uuid
+  displayOrder   Int          @default(0) @map("display_order")
+  status         BranchStatus @default(ACTIVE)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  children   Branch[] @relation("BranchTree")
+  clan       Clan     @relation("ClanBranches", fields: [clanId], references: [id], onDelete: Cascade)
+  headPerson Person?  @relation("BranchHead", fields: [headPersonId], references: [id], onDelete: SetNull)
+  parent     Branch?  @relation("BranchTree", fields: [parentBranchId], references: [id], onDelete: SetNull)
+  persons    Person[] @relation("BranchPersons")
+
+  @@index([clanId])
+  @@index([parentBranchId])
+  @@index([headPersonId])
+  @@index([status])
+  @@map("branches")
+}
+
+model Person {
+  id                String       @id @default(uuid()) @db.Uuid
+  clanId            String       @map("clan_id") @db.Uuid
+  branchId          String?      @map("branch_id") @db.Uuid
+  fullName          String       @map("full_name") @db.VarChar(180)
+  commonName        String?      @map("common_name") @db.VarChar(180)
+  gender            Gender       @default(UNKNOWN)
+  avatarUrl         String?      @map("avatar_url")
+  generationNumber  Int?         @map("generation_number")
+  birthDate         DateTime?    @map("birth_date") @db.Date
+  birthCalendarType CalendarType @default(SOLAR) @map("birth_calendar_type")
+  lifeStatus        LifeStatus   @default(LIVING) @map("life_status")
+  isBranchHead      Boolean      @default(false) @map("is_branch_head")
+  biography         String?
+  hometown          String?      @db.VarChar(180)
+  currentLocation   String?      @map("current_location") @db.VarChar(180)
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  branch              Branch?        @relation("BranchPersons", fields: [branchId], references: [id], onDelete: SetNull)
+  clan                Clan           @relation("ClanPersons", fields: [clanId], references: [id], onDelete: Cascade)
+  foundedClans        Clan[]         @relation("ClanFounder")
+  headedBranches      Branch[]       @relation("BranchHead")
+  sourceRelationships Relationship[] @relation("PersonOne")
+  targetRelationships Relationship[] @relation("PersonTwo")
+
+  @@index([clanId])
+  @@index([branchId])
+  @@index([fullName])
+  @@index([generationNumber])
+  @@index([isBranchHead])
+  @@map("persons")
+}
+
+model Relationship {
+  id               String           @id @default(uuid()) @db.Uuid
+  person1Id        String           @map("person_1_id") @db.Uuid
+  person2Id        String           @map("person_2_id") @db.Uuid
+  relationshipType RelationshipType @map("relationship_type")
+  startDate        DateTime?        @map("start_date") @db.Date
+  endDate          DateTime?        @map("end_date") @db.Date
+  note             String?
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  person1 Person @relation("PersonOne", fields: [person1Id], references: [id], onDelete: Cascade)
+  person2 Person @relation("PersonTwo", fields: [person2Id], references: [id], onDelete: Cascade)
+
+  @@unique([person1Id, person2Id, relationshipType])
+  @@index([person1Id])
+  @@index([person2Id])
+  @@index([relationshipType])
+  @@map("relationships")
+}
+
 model AuditLog {
   id           String   @id @default(uuid()) @db.Uuid
   action       String   @db.VarChar(120)

@@ -4,12 +4,17 @@ export const PERMISSIONS = {
   USERS_MANAGE: 'users.manage',
   USERS_CHANGE_OWN_PASSWORD: 'users.change-own-password',
   AUDIT_LOGS_VIEW: 'audit-logs.view',
+  CLAN_MANAGE: 'clan.manage',
+  BRANCHES_MANAGE: 'branches.manage',
+  PERSONS_MANAGE: 'persons.manage',
+  RELATIONSHIPS_MANAGE: 'relationships.manage',
 } as const;
 
 export const ROLE_CODES = {
   ADMIN: 'ADMIN',
-  OPERATOR: 'OPERATOR',
-  AUDITOR: 'AUDITOR',
+  TRUONG_HO: 'TRUONG_HO',
+  TRUONG_CHI: 'TRUONG_CHI',
+  NGUOI_BINH_THUONG: 'NGUOI_BINH_THUONG',
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

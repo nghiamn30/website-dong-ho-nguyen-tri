@@ -11,19 +11,33 @@ export const seedRoles: RoleRecord[] = [
     permissions: Object.values(PERMISSIONS),
   },
   {
-    code: ROLE_CODES.OPERATOR,
-    name: 'Vận hành hệ thống',
+    code: ROLE_CODES.TRUONG_HO,
+    name: 'Trưởng họ',
     permissions: [
       PERMISSIONS.DASHBOARD_VIEW,
       PERMISSIONS.USERS_CHANGE_OWN_PASSWORD,
+      PERMISSIONS.CLAN_MANAGE,
+      PERMISSIONS.BRANCHES_MANAGE,
+      PERMISSIONS.PERSONS_MANAGE,
+      PERMISSIONS.RELATIONSHIPS_MANAGE,
     ],
   },
   {
-    code: ROLE_CODES.AUDITOR,
-    name: 'Theo dõi nhật ký',
+    code: ROLE_CODES.TRUONG_CHI,
+    name: 'Trưởng chi',
     permissions: [
       PERMISSIONS.DASHBOARD_VIEW,
-      PERMISSIONS.AUDIT_LOGS_VIEW,
+      PERMISSIONS.USERS_CHANGE_OWN_PASSWORD,
+      PERMISSIONS.BRANCHES_MANAGE,
+      PERMISSIONS.PERSONS_MANAGE,
+      PERMISSIONS.RELATIONSHIPS_MANAGE,
+    ],
+  },
+  {
+    code: ROLE_CODES.NGUOI_BINH_THUONG,
+    name: 'Người bình thường',
+    permissions: [
+      PERMISSIONS.DASHBOARD_VIEW,
       PERMISSIONS.USERS_CHANGE_OWN_PASSWORD,
     ],
   },

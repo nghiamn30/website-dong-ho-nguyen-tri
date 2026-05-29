@@ -14,8 +14,9 @@ describe('UsersRepository', () => {
 
     expect(roles.map((role) => role.code)).toEqual([
       ROLE_CODES.ADMIN,
-      ROLE_CODES.AUDITOR,
-      ROLE_CODES.OPERATOR,
+      ROLE_CODES.NGUOI_BINH_THUONG,
+      ROLE_CODES.TRUONG_CHI,
+      ROLE_CODES.TRUONG_HO,
     ]);
     expect(admin?.passwordHash).not.toBe('admin123');
     expect(await bcrypt.compare('admin123', admin?.passwordHash ?? '')).toBe(
@@ -31,7 +32,7 @@ describe('UsersRepository', () => {
       employeeCode: 'TEST001',
       name: 'Test User',
       passwordHash: await bcrypt.hash('secret123', 4),
-      roleCodes: [ROLE_CODES.OPERATOR],
+      roleCodes: [ROLE_CODES.NGUOI_BINH_THUONG],
       isActive: true,
       createdAt: '2026-04-28T00:00:00.000Z',
       updatedAt: '2026-04-28T00:00:00.000Z',
@@ -42,11 +43,11 @@ describe('UsersRepository', () => {
 
     const updated = await repository.updateUser(created.id, {
       name: 'Updated User',
-      roleCode: ROLE_CODES.AUDITOR,
+      roleCode: ROLE_CODES.TRUONG_CHI,
     });
 
     expect(updated.name).toBe('Updated User');
-    expect(updated.roleCodes).toEqual([ROLE_CODES.AUDITOR]);
+    expect(updated.roleCodes).toEqual([ROLE_CODES.TRUONG_CHI]);
 
     const inactive = await repository.setUserStatus(created.id, false);
     expect(inactive.isActive).toBe(false);

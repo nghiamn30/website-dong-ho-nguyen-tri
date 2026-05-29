@@ -79,7 +79,7 @@ const defaultForm: UserFormState = {
   employeeCode: "",
   name: "",
   password: "",
-  roleCode: "OPERATOR",
+  roleCode: "NGUOI_BINH_THUONG",
 };
 
 const statusLabels: Record<StatusFilter, string> = {
@@ -94,6 +94,10 @@ const permissionLabels: Record<string, string> = {
   "users.manage": "Người dùng",
   "users.change-own-password": "Đổi mật khẩu cá nhân",
   "audit-logs.view": "Nhật ký",
+  "clan.manage": "Dòng họ",
+  "branches.manage": "Chi/nhánh",
+  "persons.manage": "Thành viên",
+  "relationships.manage": "Quan hệ",
 };
 
 export function UserManagementPage() {
@@ -198,7 +202,7 @@ export function UserManagementPage() {
       employeeCode: managedUser.employeeCode,
       name: managedUser.name,
       password: "",
-      roleCode: managedUser.roles[0]?.code ?? "OPERATOR",
+      roleCode: managedUser.roles[0]?.code ?? "NGUOI_BINH_THUONG",
     });
     setFormError(null);
     setIsFormOpen(true);

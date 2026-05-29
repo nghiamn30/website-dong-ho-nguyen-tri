@@ -1,6 +1,9 @@
 import {
+  GitBranch,
   History,
   LayoutDashboard,
+  Network,
+  Search,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -11,6 +14,10 @@ export const PERMISSIONS = {
   USERS_MANAGE: "users.manage",
   USERS_CHANGE_OWN_PASSWORD: "users.change-own-password",
   AUDIT_LOGS_VIEW: "audit-logs.view",
+  CLAN_MANAGE: "clan.manage",
+  BRANCHES_MANAGE: "branches.manage",
+  PERSONS_MANAGE: "persons.manage",
+  RELATIONSHIPS_MANAGE: "relationships.manage",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -36,6 +43,47 @@ export const navigationGroups: NavigationGroup[] = [
         href: "/dashboard",
         icon: LayoutDashboard,
         permissions: [PERMISSIONS.DASHBOARD_VIEW],
+      },
+    ],
+  },
+  {
+    title: "Gia phả",
+    items: [
+      {
+        title: "Quản lý gia phả",
+        href: "/genealogy",
+        icon: GitBranch,
+        permissions: [PERMISSIONS.CLAN_MANAGE],
+      },
+      {
+        title: "Chi/nhánh",
+        href: "/genealogy/branches",
+        icon: GitBranch,
+        permissions: [PERMISSIONS.BRANCHES_MANAGE],
+      },
+      {
+        title: "Thành viên",
+        href: "/genealogy/persons",
+        icon: Users,
+        permissions: [PERMISSIONS.PERSONS_MANAGE],
+      },
+      {
+        title: "Quan hệ",
+        href: "/genealogy/relationships",
+        icon: Network,
+        permissions: [PERMISSIONS.RELATIONSHIPS_MANAGE],
+      },
+      {
+        title: "Cây phả hệ",
+        href: "/family-tree",
+        icon: Network,
+        permissions: [],
+      },
+      {
+        title: "Tra cứu",
+        href: "/people",
+        icon: Search,
+        permissions: [],
       },
     ],
   },
