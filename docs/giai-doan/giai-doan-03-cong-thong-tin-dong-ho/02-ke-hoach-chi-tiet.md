@@ -1,55 +1,56 @@
-# Giai đoạn 03 - Kế hoạch chi tiết cổng thông tin dòng họ
+# Giai đoạn 03 - Kế hoạch chi tiết cổng thông tin, bài viết và tư liệu dòng họ
 
 ## 1. Mục tiêu bàn giao
 
-Sau giai đoạn này, hệ thống phải có cổng thông tin dòng họ vận hành được: khách xem nội dung công khai, thành viên xem nội dung nội bộ, ban chấp hành/biên tập viên đăng bài và quản lý album/tài liệu.
+Sau giai đoạn này, hệ thống có cổng thông tin dòng họ, quản trị được bài viết/thông báo, album, tài liệu và liên kết nội dung với sự kiện.
 
-## 2. Điều kiện bắt đầu
+## 2. Căn cứ từ nghiên cứu
 
-- Giai đoạn 1 đã có dữ liệu dòng họ, chi/nhánh và thành viên.
-- Giai đoạn 2 đã có sự kiện để liên kết bài viết nếu cần.
-- Authentication và permission đã ổn định.
+- Dữ liệu dòng họ, chi/nhánh và sự kiện đã có từ giai đoạn trước.
+- Nội dung cần có workflow nháp, xuất bản và hạ bài.
+- Upload media phải kiểm soát loại file, dung lượng và quyền xem.
+- Không thêm role mới ngoài 4 role đã thống nhất.
+- Trang chủ phải hoạt động cả khi dữ liệu nội dung còn ít.
 
-## 3. Thứ tự triển khai đề xuất
+## 3. Các mốc công việc trong giai đoạn
 
-### Bước 1 - Thiết kế nội dung
+| Mốc | Nội dung trọng tâm | Kết quả cần đạt |
+|---|---|---|
+| G03-M01 | Chốt taxonomy và cấu trúc nội dung | Có chuyên mục, trạng thái bài viết và phạm vi hiển thị |
+| G03-M02 | Triển khai database nội dung/media | Có model bài viết, chuyên mục, album, media và page content |
+| G03-M03 | Triển khai backend API | API public content, post admin, category, album, media hoạt động |
+| G03-M04 | Triển khai cổng thông tin | Trang chủ, giới thiệu, tin tức và thư viện mở được |
+| G03-M05 | Triển khai quản trị nội dung | Tạo bài, publish, quản lý album và upload media được |
+| G03-M06 | Kiểm thử và nghiệm thu | Visibility, upload, liên kết sự kiện, lint và build đạt |
 
-- Chốt nhóm chuyên mục.
-- Chốt trạng thái bài viết: draft, published, hidden.
-- Chốt phạm vi hiển thị: public, members, branch, council.
-- Chốt cấu trúc trang chủ.
-- Chốt thông tin tĩnh của trang giới thiệu.
+## 4. Kế hoạch triển khai theo mốc
 
-### Bước 2 - Database
+### G03-M01 - Taxonomy và nội dung
 
-- Tạo bảng `Category`.
-- Tạo bảng `Post`.
-- Tạo bảng `Album`.
-- Tạo bảng `Media`.
-- Bổ sung liên kết tới `Event` nếu đã có.
-- Bổ sung trường phạm vi hiển thị cho nội dung.
+- Chốt chuyên mục: thông báo, hoạt động, tin vui, tin buồn, tư liệu, văn bản.
+- Chốt trạng thái: draft, published, hidden.
+- Chốt phạm vi: public, members, branch, leadership.
+- Chốt nội dung trang giới thiệu và trang chủ.
 
-### Bước 3 - Backend API
+### G03-M02 - Database
 
-Nhóm API cần có:
+- Tạo model `Category`, `Post`, `Album`, `Media`, `PageContent`.
+- Thêm liên kết bài viết/album với `Event`.
+- Thêm index theo slug, status, category và branch.
+- Thiết kế lưu file theo cấu hình hiện tại của dự án.
 
-| Nhóm | API đề xuất |
+### G03-M03 - Backend API
+
+| Nhóm | API cần có |
 |---|---|
-| Public content | Lấy trang chủ, bài viết công khai, album công khai |
-| Post admin | CRUD bài viết, publish, hide, pin |
+| Public | Trang chủ, bài viết public, album public |
+| Post admin | CRUD, publish, hide, pin |
 | Category | CRUD chuyên mục |
-| Album | CRUD album, liên kết sự kiện/bài viết |
+| Album | CRUD album, chọn ảnh đại diện |
 | Media | Upload, cập nhật caption, xóa mềm |
-| Page content | Cập nhật nội dung giới thiệu, lịch sử, từ đường |
+| Page content | Cập nhật giới thiệu, lịch sử, từ đường |
 
-Yêu cầu backend:
-
-- Kiểm tra quyền theo trạng thái và phạm vi hiển thị.
-- Validate slug không trùng.
-- Kiểm soát loại file upload.
-- Không trả file hoặc metadata nội bộ cho người không đủ quyền.
-
-### Bước 4 - Frontend công khai
+### G03-M04 - Cổng thông tin
 
 Routes đề xuất:
 
@@ -59,23 +60,13 @@ Routes đề xuất:
 /gioi-thieu/lich-su
 /gioi-thieu/thuy-to
 /gioi-thieu/tu-duong
-/gioi-thieu/quy-uoc
 /tin-tuc
 /tin-tuc/[slug]
 /thu-vien
 /thu-vien/[id]
 ```
 
-Màn hình cần có:
-
-- Trang chủ có banner, giới thiệu ngắn, thông báo nổi bật, sự kiện sắp tới, bài viết mới, album nổi bật.
-- Trang giới thiệu dòng họ.
-- Danh sách bài viết theo chuyên mục.
-- Chi tiết bài viết.
-- Danh sách album.
-- Chi tiết album.
-
-### Bước 5 - Frontend quản trị
+### G03-M05 - Quản trị nội dung
 
 Routes đề xuất:
 
@@ -91,50 +82,39 @@ Routes đề xuất:
 
 Màn hình cần có:
 
-- Danh sách bài viết có lọc theo trạng thái/chuyên mục.
+- Danh sách bài viết.
 - Form soạn bài.
-- Chức năng lưu nháp, đăng bài, hạ bài, ghim bài.
 - Quản lý chuyên mục.
 - Quản lý album.
-- Upload ảnh/tài liệu.
-- Quản lý nội dung trang giới thiệu.
+- Upload media.
+- Quản lý nội dung giới thiệu.
 
-### Bước 6 - Permission đề xuất
+### G03-M06 - Kiểm thử
+
+- Test public/member/branch visibility.
+- Test slug không trùng.
+- Test publish/hide/pin.
+- Test upload file hợp lệ và không hợp lệ.
+- Test liên kết bài viết/album với sự kiện.
+- Test trang chủ khi không có dữ liệu.
+
+## 5. Permission đề xuất
 
 ```text
-public-content.manage
-posts.view
 posts.manage
 posts.publish
 categories.manage
-albums.view
 albums.manage
 media.upload
 media.manage
+pages.manage
 ```
 
-### Bước 7 - Kiểm thử
+## 6. Ngoài phạm vi
 
-- Test visibility public/members/branch.
-- Test slug bài viết.
-- Test publish/hide bài viết.
-- Test upload file hợp lệ và không hợp lệ.
-- Test trang chủ không lỗi khi thiếu dữ liệu.
-- Test liên kết bài viết với sự kiện.
-
-## 4. Ngoài phạm vi
-
-- Quy trình duyệt nội dung nhiều cấp, chuyển sang giai đoạn 4 nếu cần.
-- Bình luận bài viết.
-- Livestream/video nâng cao.
-- Tối ưu SEO chuyên sâu.
-- Tự động xử lý ảnh nâng cao.
-
-## 5. Kết quả bàn giao
-
-- Cổng thông tin công khai hoạt động.
-- Quản trị nội dung hoạt động.
-- Album/tài liệu hoạt động ở mức cơ bản.
-- Nội dung liên kết được với sự kiện.
-- Quyền xem nội dung công khai/nội bộ/theo chi hoạt động.
+- Bình luận.
+- Duyệt nội dung nhiều cấp.
+- SEO nâng cao.
+- Tối ưu xử lý ảnh nâng cao.
+- Livestream hoặc video processing.
 

@@ -1,84 +1,63 @@
-# Giai đoạn 02 - Kế hoạch chi tiết người đã khuất và lịch giỗ
+# Giai đoạn 02 - Kế hoạch chi tiết người đã khuất, ngày giỗ và lịch nhắc
 
 ## 1. Mục tiêu bàn giao
 
-Sau giai đoạn này, hệ thống phải quản lý được người đã khuất, ngày giỗ âm lịch, sự kiện dòng họ và thông báo nhắc lịch ở mức vận hành ban đầu.
+Sau giai đoạn này, hệ thống quản lý được ngày mất, ngày giỗ âm lịch, sự kiện dòng họ và nhắc lịch theo phạm vi chi/nhánh phù hợp.
 
-## 2. Điều kiện bắt đầu
+## 2. Căn cứ từ nghiên cứu
 
-- Giai đoạn 1 đã có hồ sơ thành viên ổn định.
-- Thành viên đã có trạng thái sống/mất.
-- Thành viên đã có chi/nhánh để xác định phạm vi thông báo.
-- Permission nền tảng đã hoạt động.
+- Dữ liệu thành viên, chi/nhánh và người đứng đầu chi/nhánh đến từ giai đoạn 1.
+- Ngày giỗ lưu theo âm lịch và cần quy đổi sang ngày dương theo từng năm.
+- Logic nhắc lịch theo chi/nhánh dựa trên người được đánh dấu là đứng đầu chi/nhánh.
+- Trưởng chi được thao tác dữ liệu trong phạm vi chi/nhánh phụ trách.
+- Notification trong website và email là kênh nhắc lịch của giai đoạn này.
 
-## 3. Thứ tự triển khai đề xuất
+## 3. Các mốc công việc trong giai đoạn
 
-### Bước 1 - Mở rộng hồ sơ người đã khuất
+| Mốc | Nội dung trọng tâm | Kết quả cần đạt |
+|---|---|---|
+| G02-M01 | Mở rộng hồ sơ người đã khuất | Hồ sơ lưu được ngày mất, nơi an táng và ghi chú |
+| G02-M02 | Thiết kế ngày giỗ và logic chi/nhánh nhận nhắc | Có model ngày giỗ, tháng nhuận và phạm vi nhắc lịch |
+| G02-M03 | Triển khai sự kiện và lịch | Có sự kiện tự động/thủ công và lịch tháng/năm |
+| G02-M04 | Triển khai notification/email | Có nhắc lịch trong hệ thống và email, chống gửi trùng |
+| G02-M05 | Triển khai UI quản trị/người dùng | Quản trị quản lý ngày giỗ, người dùng xem lịch |
+| G02-M06 | Kiểm thử và nghiệm thu | Test lịch âm, phạm vi nhắc, permission, lint và build đạt |
 
-- Bổ sung dữ liệu ngày mất.
-- Bổ sung loại lịch ngày mất nếu cần.
-- Bổ sung nơi an táng.
-- Bổ sung bản đồ hoặc ghi chú nơi an táng.
-- Bổ sung quyền hiển thị thông tin người đã khuất.
+## 4. Kế hoạch triển khai theo mốc
 
-### Bước 2 - Thiết kế ngày giỗ
+### G02-M01 - Hồ sơ người đã khuất
 
-- Tạo bảng `DeathAnniversary`.
+- Bổ sung ngày mất và loại lịch ngày mất.
+- Bổ sung nơi an táng, bản đồ hoặc ghi chú.
+- Chỉ hiển thị dữ liệu người đã khuất khi trạng thái phù hợp.
+- Trưởng chi được cập nhật dữ liệu trong chi nếu đã có quyền phạm vi.
+
+### G02-M02 - Ngày giỗ và phạm vi nhắc
+
+- Tạo model `DeathAnniversary`.
 - Lưu ngày âm, tháng âm, tháng nhuận.
-- Lưu phạm vi thông báo.
-- Lưu mốc nhắc trước ngày giỗ.
-- Liên kết ngày giỗ với hồ sơ thành viên.
+- Liên kết ngày giỗ với người đã khuất.
+- Xác định `branch_scope_id` theo chi/nhánh của người đứng đầu.
+- Nếu người được giỗ là người đứng đầu chi/nhánh, mặc định nhắc thành viên trong chi/nhánh đó.
+- Cho phép trưởng họ/admin ghi đè phạm vi toàn họ hoặc phạm vi khác.
 
-### Bước 3 - Thiết kế sự kiện
+### G02-M03 - Sự kiện và lịch
 
-- Tạo bảng `Event`.
-- Phân biệt sự kiện tự động và sự kiện thủ công.
-- Hỗ trợ loại sự kiện: ngày giỗ, giỗ tổ, họp họ, tin vui, tin buồn, hoạt động.
+- Tạo model `Event`.
+- Phân biệt sự kiện tự động từ ngày giỗ và sự kiện thủ công.
+- Hỗ trợ loại sự kiện: ngày giỗ, giỗ tổ, họp họ, tin vui, tin buồn.
 - Hỗ trợ trạng thái: draft, published, completed, cancelled.
-- Hỗ trợ phạm vi hiển thị.
+- API trả lịch theo tháng, năm và sự kiện sắp tới.
 
-### Bước 4 - Xử lý lịch âm/dương
+### G02-M04 - Notification và email
 
-- Chốt cách chuyển đổi ngày âm sang ngày dương.
-- Tạo service quy đổi ngày giỗ theo năm.
-- Tạo cơ chế kiểm thử các ngày âm thường gặp.
-- Xử lý tháng nhuận rõ ràng.
-- Không ghi đè ngày âm gốc khi quy đổi.
+- Tạo job tìm sự kiện cần nhắc.
+- Tạo notification trong website.
+- Gửi email nếu cấu hình sẵn sàng.
+- Chống gửi trùng theo event, user, channel và mốc nhắc.
+- Ghi nhận lỗi gửi để quản trị kiểm tra.
 
-### Bước 5 - Backend API
-
-Nhóm API cần có:
-
-| Nhóm | API đề xuất |
-|---|---|
-| Deceased profile | Cập nhật thông tin người đã khuất |
-| Death anniversary | CRUD ngày giỗ, lấy danh sách theo tháng/năm |
-| Event | CRUD sự kiện, publish/cancel sự kiện |
-| Calendar | Lấy lịch theo tháng/năm, sự kiện sắp tới |
-| Notification | Lấy thông báo, đánh dấu đã đọc |
-| Preference | Cập nhật lựa chọn nhận nhắc lịch |
-
-### Bước 6 - Frontend quản trị
-
-Routes đề xuất:
-
-```text
-/calendar/death-anniversaries
-/calendar/events
-/calendar/events/[id]
-/calendar/reminder-settings
-```
-
-Màn hình cần triển khai:
-
-- Danh sách ngày giỗ.
-- Form tạo/sửa ngày giỗ.
-- Danh sách sự kiện.
-- Form tạo/sửa sự kiện.
-- Lịch tháng cho quản trị.
-- Cấu hình nhắc lịch.
-
-### Bước 7 - Frontend người dùng
+### G02-M05 - Giao diện
 
 Routes đề xuất:
 
@@ -87,50 +66,57 @@ Routes đề xuất:
 /calendar/events/[id]
 /notifications
 /account/notification-settings
+/calendar/death-anniversaries
+/calendar/events
+/calendar/reminder-settings
 ```
 
-Màn hình cần triển khai:
+Màn hình cần có:
 
-- Lịch sự kiện theo tháng.
+- Danh sách ngày giỗ.
+- Form ngày giỗ.
+- Lịch tháng/năm.
 - Danh sách sự kiện sắp tới.
 - Chi tiết sự kiện.
 - Danh sách thông báo cá nhân.
-- Cài đặt nhận nhắc lịch.
+- Cấu hình nhận nhắc.
 
-### Bước 8 - Nhắc lịch và email
+### G02-M06 - Kiểm thử
 
-- Tạo job tìm sự kiện cần nhắc.
-- Gửi notification trong website.
-- Gửi email nếu đã cấu hình email provider.
-- Chống gửi trùng bằng bảng log hoặc trạng thái gửi.
-- Ghi nhận lỗi gửi để quản trị kiểm tra.
+- Test quy đổi âm/dương.
+- Test tháng nhuận.
+- Test tạo sự kiện từ ngày giỗ.
+- Test logic người đứng đầu chi/nhánh.
+- Test không gửi thông báo trùng.
+- Test trưởng chi chỉ cập nhật dữ liệu trong chi.
 
-## 4. Permission đề xuất
+## 5. API và permission đề xuất
+
+Permission:
 
 ```text
-death-anniversaries.view
 death-anniversaries.manage
-events.view
 events.manage
 events.publish
-notifications.view
-notification-settings.manage-own
+notifications.manage-own
+reminder-settings.manage-own
 ```
 
-## 5. Kiểm thử
+API chính:
 
-- Test chuyển đổi ngày âm/dương.
-- Test tạo ngày giỗ từ hồ sơ người đã khuất.
-- Test lấy lịch theo tháng/năm.
-- Test phạm vi thông báo theo chi.
-- Test không gửi nhắc lịch trùng.
-- Test ẩn thông tin không đủ quyền.
+- Cập nhật hồ sơ người đã khuất.
+- CRUD ngày giỗ.
+- CRUD sự kiện.
+- Lấy lịch tháng/năm.
+- Lấy sự kiện sắp tới.
+- Lấy/đánh dấu thông báo.
+- Cập nhật lựa chọn nhận nhắc.
 
 ## 6. Ngoài phạm vi
 
 - Zalo/SMS.
 - Đăng ký tham dự sự kiện.
 - Album ảnh sự kiện.
-- Bài viết liên kết sự kiện, phần này chuyển sang giai đoạn 3.
-- Quản lý quỹ hoặc đóng góp sự kiện.
+- Bài viết liên kết sự kiện.
+- Quản lý quỹ hoặc đóng góp.
 

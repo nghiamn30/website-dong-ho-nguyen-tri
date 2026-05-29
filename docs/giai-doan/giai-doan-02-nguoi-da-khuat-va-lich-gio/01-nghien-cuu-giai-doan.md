@@ -1,99 +1,124 @@
-# Giai đoạn 02 - Nghiên cứu người đã khuất và lịch giỗ
+# Nghiên cứu giai đoạn 2: Người đã khuất, ngày giỗ và lịch nhắc
 
-## 1. Cơ sở nghiên cứu
+## 1. Bối cảnh
 
-Tài liệu này được tách từ `docs/nghien-cuu.md`, trọng tâm là:
+### Dự án đã có những gì
 
-- Hồ sơ người đã khuất.
-- Ngày mất, ngày giỗ âm lịch và nơi an táng.
-- Lịch giỗ tự động.
-- Sự kiện dòng họ.
-- Thông báo trong website và email.
+- Nền tảng kỹ thuật đã có auth, role/permission, audit log, layout và API client.
+- Sau giai đoạn 1, hệ thống dự kiến đã có dòng họ, chi/nhánh, thành viên, quan hệ và phả đồ.
+- Thành viên đã có `life_status`, `birth_date`, `branch_id` và cờ/nghiệp vụ xác định người đứng đầu chi/nhánh.
+- Chưa có dữ liệu ngày mất, ngày giỗ âm lịch, sự kiện, lịch nhắc và thông báo.
+- Chưa có cơ chế chuyển đổi âm lịch/dương lịch được chốt trong codebase.
 
-## 2. Mục tiêu giai đoạn
+Giai đoạn 2 biến dữ liệu phả hệ thành lịch truyền thống: ngày mất, ngày giỗ, giỗ tổ, sự kiện và nhắc lịch cho đúng người trong chi/nhánh.
 
-Xây dựng phân hệ lịch giỗ và sự kiện để hệ thống có thể:
+## 2. Vai trò áp dụng
 
-- Bổ sung thông tin người đã khuất vào hồ sơ thành viên.
-- Lưu ngày giỗ âm lịch, tháng nhuận và phạm vi thông báo.
-- Tự sinh lịch giỗ hằng năm từ hồ sơ người đã khuất.
-- Tạo và quản lý sự kiện thủ công như giỗ tổ, họp họ, lễ đầu xuân.
-- Hiển thị sự kiện sắp tới trên dashboard hoặc trang người dùng.
-- Gửi thông báo trong website và email theo mốc nhắc lịch.
-
-## 3. Thực thể nghiệp vụ
-
-| Thực thể | Vai trò |
+| Vai trò | Phạm vi trong giai đoạn 2 |
 |---|---|
-| DeathAnniversary | Lưu quy tắc giỗ lặp lại hằng năm cho người đã khuất |
-| Event | Lưu sự kiện thủ công hoặc sự kiện được sinh từ hồ sơ |
-| Notification | Ghi nhận thông báo gửi cho thành viên |
-| NotificationPreference | Lưu lựa chọn nhận nhắc lịch của từng tài khoản |
+| Admin | Cấu hình lịch, xử lý dữ liệu toàn hệ thống, kiểm tra job nhắc lịch |
+| Trưởng họ | Quản lý ngày giỗ/sự kiện toàn họ, giỗ tổ và phạm vi thông báo |
+| Trưởng chi | Cập nhật thông tin người đã khuất và ngày giỗ trong chi phụ trách |
+| Người bình thường | Xem lịch giỗ/sự kiện và nhận nhắc lịch phù hợp |
 
-## 4. Quy tắc nghiệp vụ cần chốt
+Luồng đọc lịch có thể mở cho mọi người trong hệ thống, nhưng thao tác tạo/sửa ngày giỗ, sự kiện và phạm vi nhắc lịch phải kiểm soát theo vai trò.
 
-1. Ngày giỗ có thể dùng âm lịch hoặc dương lịch, nhưng phiên bản đầu phải ưu tiên âm lịch.
-2. Ngày giỗ âm lịch cần lưu ngày, tháng và trạng thái tháng nhuận.
-3. Mỗi người đã khuất có thể có một ngày giỗ chính thức.
-4. Sự kiện giỗ tự động cần có ngày dương quy đổi theo từng năm.
-5. Sự kiện thủ công phải có người tạo, phạm vi hiển thị và trạng thái xuất bản.
-6. Người dùng có thể nhận nhắc lịch theo toàn họ, theo chi hoặc sự kiện lớn.
-7. Email/Zalo/SMS không được trộn chung; giai đoạn này chỉ xét website notification và email.
+## 3. Module cần xây dựng
 
-## 5. Nghiên cứu lịch âm
-
-Ngày giỗ tại Việt Nam thường tổ chức theo âm lịch. Trước khi triển khai cần chốt:
-
-- Nguồn thuật toán hoặc thư viện chuyển đổi âm/dương.
-- Cách xử lý tháng nhuận.
-- Cách kiểm thử các năm có tháng nhuận.
-- Cách lưu ngày âm để không mất dữ liệu gốc.
-- Cách cache ngày dương quy đổi trong từng năm.
-
-Nếu cần thêm thư viện, phải đánh giá riêng và chỉ thêm sau khi thống nhất.
-
-## 6. Màn hình cần nghiên cứu chi tiết
-
-### Khu vực quản trị
-
-- Bổ sung thông tin người đã khuất trong hồ sơ thành viên.
-- Danh sách ngày giỗ.
-- Form tạo/sửa ngày giỗ.
-- Danh sách sự kiện.
-- Form tạo/sửa sự kiện.
-- Cấu hình mốc nhắc lịch.
-
-### Khu vực người dùng
-
-- Lịch giỗ theo tháng.
-- Danh sách sự kiện sắp tới.
-- Trang chi tiết sự kiện.
-- Trung tâm thông báo cá nhân.
-- Cài đặt nhận nhắc lịch.
-
-## 7. Phạm vi thông báo
-
-| Phạm vi | Ý nghĩa |
+| Module | Mục tiêu |
 |---|---|
-| Toàn họ | Tất cả thành viên có quyền nhận thông báo |
-| Theo chi/nhánh | Chỉ thành viên thuộc chi/nhánh liên quan |
-| Nhóm vai trò | Ban chấp hành, ban phả hoặc quản trị |
-| Cá nhân | Một số tài khoản được chọn trực tiếp |
+| Hồ sơ người đã khuất | Lưu ngày mất, ngày giỗ, nơi an táng |
+| Ngày giỗ âm lịch | Lưu ngày/tháng âm, tháng nhuận và quy tắc lặp |
+| Lịch sự kiện | Hiển thị giỗ, giỗ tổ, họp họ và sự kiện thủ công |
+| Logic chi/nhánh nhận nhắc | Dựa trên người đứng đầu chi/nhánh để xác định nhóm nhận nhắc |
+| Notification | Tạo thông báo trong hệ thống |
+| Email reminder | Gửi email nhắc lịch nếu cấu hình sẵn sàng |
+| Cài đặt nhận nhắc | Cho phép người dùng quản lý lựa chọn nhận thông báo |
 
-## 8. Rủi ro cần xử lý
+## 4. Hiện trạng và khoảng cách
 
-- Sai ngày âm/dương gây mất niềm tin vào hệ thống.
-- Gửi email nhắc lịch trùng lặp.
-- Thông báo sai phạm vi chi/nhánh.
-- Sự kiện tự động và sự kiện thủ công bị trùng.
-- Công khai thông tin người đã khuất hoặc nơi an táng khi chưa được phép.
+| Nội dung | Hiện trạng | Khoảng cách cần xử lý |
+|---|---|---|
+| Ngày mất | Chưa có hoặc chưa đủ | Cần mở rộng hồ sơ thành viên |
+| Ngày giỗ âm lịch | Chưa có | Cần model riêng và rule chuyển đổi |
+| Người đứng đầu chi/nhánh | Được đề xuất từ giai đoạn 1 | Cần dùng làm căn cứ tạo lịch nhắc |
+| Sự kiện | Chưa có | Cần model `Event` và lịch tháng/năm |
+| Notification | Chưa có nghiệp vụ lịch | Cần model/log chống gửi trùng |
+| Email | Chưa chốt vận hành | Cần adapter hoặc cấu hình gửi email |
 
-## 9. Kết quả nghiên cứu cần đạt
+## 5. Dữ liệu đề xuất
 
-- Quy tắc lưu ngày giỗ âm lịch.
-- Quy tắc tạo sự kiện tự động hằng năm.
-- Quy tắc tạo sự kiện thủ công.
-- Danh sách API lịch giỗ/sự kiện/thông báo.
-- Màn hình quản trị và người dùng cho lịch.
-- Chiến lược kiểm thử chuyển đổi âm/dương.
+### Person mở rộng
+
+- `death_date`
+- `death_calendar_type`
+- `burial_place`
+- `burial_map_url`
+- `death_note`
+
+### DeathAnniversary
+
+- `id`
+- `person_id`
+- `lunar_day`
+- `lunar_month`
+- `is_leap_month`
+- `solar_date_cache`
+- `recurrence_type`
+- `branch_scope_id`
+- `notification_scope`
+- `notify_before_days`
+- `ceremony_note`
+- `active`
+- `created_at`
+- `updated_at`
+
+### Event
+
+- `id`
+- `clan_id`
+- `branch_id`
+- `source_type`
+- `source_id`
+- `title`
+- `event_type`
+- `description`
+- `calendar_type`
+- `lunar_day`
+- `lunar_month`
+- `is_leap_month`
+- `start_datetime`
+- `end_datetime`
+- `location`
+- `visibility_scope`
+- `status`
+- `created_by`
+- `created_at`
+- `updated_at`
+
+### Notification
+
+- `id`
+- `user_id`
+- `event_id`
+- `channel`
+- `reminder_key`
+- `title`
+- `content`
+- `read_at`
+- `sent_at`
+- `status`
+- `created_at`
+
+## 6. Quyết định thiết kế
+
+1. Ngày giỗ ưu tiên lưu theo âm lịch, bao gồm ngày, tháng và trạng thái tháng nhuận.
+2. Ngày âm gốc không bị ghi đè khi quy đổi sang ngày dương.
+3. Hệ thống cần service riêng để quy đổi ngày âm/dương theo năm.
+4. Mỗi thành viên có tùy chọn xác định có phải người đứng đầu chi/nhánh hay không.
+5. Khi người được giỗ là người đứng đầu chi/nhánh, lịch nhắc mặc định gửi cho thành viên trong chi/nhánh đó.
+6. Trưởng họ có thể ghi đè phạm vi nhắc lịch thành toàn họ hoặc phạm vi khác.
+7. Trưởng chi chỉ quản lý ngày mất/ngày giỗ trong chi/nhánh phụ trách.
+8. Cần chống gửi trùng bằng `reminder_key` hoặc bảng log gửi thông báo.
+9. Zalo/SMS chưa triển khai ở giai đoạn này.
 

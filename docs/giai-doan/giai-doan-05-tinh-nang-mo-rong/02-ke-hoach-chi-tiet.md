@@ -1,94 +1,92 @@
-# Giai đoạn 05 - Kế hoạch chi tiết tính năng mở rộng
+# Giai đoạn 05 - Kế hoạch chi tiết tính năng mở rộng và tối ưu vận hành
 
 ## 1. Mục tiêu bàn giao
 
-Sau giai đoạn này, hệ thống có thể bổ sung các tính năng nâng cao theo thứ tự ưu tiên, không làm ảnh hưởng nền tảng MVP đã ổn định.
+Sau giai đoạn này, hệ thống có thể bổ sung từng tính năng mở rộng theo mini-phase độc lập, có kiểm soát rủi ro, quyền truy cập và vận hành.
 
-## 2. Điều kiện bắt đầu
+## 2. Căn cứ từ nghiên cứu
 
-- Giai đoạn 1-4 đã nghiệm thu.
-- Dữ liệu phả hệ đủ sạch.
-- Quyền riêng tư đã được áp dụng nhất quán.
-- Có nhu cầu thực tế từ người dùng hoặc ban chấp hành.
-- Có quyết định ưu tiên rõ cho từng tính năng.
+- Giai đoạn 5 chỉ bắt đầu khi MVP giai đoạn 1-4 đã ổn định.
+- Không triển khai tất cả tính năng mở rộng trong cùng một đợt.
+- Mỗi mini-phase phải có quyết định go/no-go.
+- Mọi tích hợp ngoài cần đánh giá chi phí, consent và khả năng tắt khi sự cố.
+- QR, export, xưng hô và Zalo/SMS đều phải tôn trọng quyền truy cập.
 
-## 3. Cách triển khai khuyến nghị
+## 3. Các mốc công việc trong giai đoạn
 
-Không triển khai toàn bộ giai đoạn 5 như một khối lớn. Nên chia thành từng mini-phase:
+| Mốc | Nội dung trọng tâm | Kết quả cần đạt |
+|---|---|---|
+| G05-M01 | Đánh giá và chọn tính năng mở rộng | Có quyết định go/no-go và phạm vi mini-phase |
+| G05-M02 | Thiết kế mini-phase | Có đặc tả dữ liệu, API, UI, permission và rủi ro |
+| G05-M03 | Triển khai backend/frontend | Tính năng hoạt động độc lập, không phá vỡ MVP |
+| G05-M04 | Kiểm thử dữ liệu lớn hoặc tích hợp ngoài | Test hiệu năng, quyền, sandbox provider nếu có |
+| G05-M05 | Tài liệu vận hành và nghiệm thu | Có hướng dẫn vận hành, rollback và checklist đạt |
+| G05-M06 | Tổng kết và chọn mini-phase tiếp theo | Có kết quả nghiệm thu và quyết định tiếp tục/dừng |
 
-1. Mini-phase 5.1: Tra cứu xưng hô.
-2. Mini-phase 5.2: Xuất phả đồ PDF/ảnh.
-3. Mini-phase 5.3: QR Code.
-4. Mini-phase 5.4: Đăng ký tham dự sự kiện.
-5. Mini-phase 5.5: Zalo/SMS.
-6. Mini-phase 5.6: Quản lý quỹ.
-7. Mini-phase 5.7: Số hóa tư liệu nâng cao.
+## 4. Cách triển khai khuyến nghị
 
-## 4. Kế hoạch theo nhóm tính năng
+Triển khai theo mini-phase:
 
-### 4.1. Tra cứu xưng hô
+1. G05.1 - Tra cứu xưng hô.
+2. G05.2 - Xuất phả đồ PDF/ảnh.
+3. G05.3 - QR Code.
+4. G05.4 - Đăng ký tham dự sự kiện.
+5. G05.5 - Zalo/SMS.
+6. G05.6 - Quản lý quỹ.
+7. G05.7 - Số hóa tư liệu nâng cao.
 
-- Nghiên cứu thuật toán tìm đường quan hệ giữa hai người.
-- Chuẩn hóa dữ liệu quan hệ đầu vào.
-- Tạo API tra cứu quan hệ.
-- Tạo giao diện chọn hai thành viên.
-- Trả kết quả quan hệ và cách xưng hô.
-- Thêm cảnh báo khi dữ liệu chưa đủ để xác định.
+## 5. Kế hoạch theo nhóm tính năng
 
-### 4.2. Xuất phả đồ PDF/ảnh
+### Tra cứu xưng hô
 
-- Đánh giá yêu cầu in: khổ giấy, số đời, kiểu hiển thị.
-- Đánh giá thư viện render phù hợp với stack hiện tại.
-- Tạo layout phả đồ dành riêng cho export.
+- Chuẩn hóa dữ liệu quan hệ.
+- Xây thuật toán tìm đường quan hệ.
+- Tạo API chọn hai thành viên.
+- Hiển thị kết quả và cảnh báo khi dữ liệu thiếu.
+
+### Xuất phả đồ PDF/ảnh
+
+- Chốt khổ giấy và phạm vi xuất.
+- Tận dụng hoặc điều chỉnh giải pháp phả đồ từ giai đoạn 1.
 - Tạo job export nếu cây lớn.
-- Tạo API tải file.
-- Tạo giao diện chọn phạm vi export.
+- Cung cấp file tải về.
 
-### 4.3. QR Code
+### QR Code
 
-- Chốt loại QR: hồ sơ, mộ phần, album, sự kiện.
-- Chốt quyền truy cập khi quét QR.
-- Tạo slug hoặc public token nếu cần.
-- Tạo API sinh QR.
-- Tạo giao diện tải QR.
-- Kiểm thử QR với tài khoản có quyền và không có quyền.
+- Chốt entity được tạo QR.
+- Tạo token hoặc URL an toàn.
+- Kiểm soát quyền khi quét QR.
+- Cho phép tải hoặc vô hiệu hóa QR.
 
-### 4.4. Đăng ký tham dự sự kiện
+### Đăng ký tham dự sự kiện
 
-- Mở rộng model sự kiện với trạng thái đăng ký.
-- Tạo model đăng ký tham dự.
-- Hỗ trợ đăng ký cá nhân hoặc theo hộ.
-- Tạo API đăng ký/hủy đăng ký.
-- Tạo danh sách người tham dự cho ban tổ chức.
-- Tạo xuất danh sách nếu cần.
+- Mở rộng sự kiện với trạng thái đăng ký.
+- Tạo model đăng ký.
+- Hỗ trợ đăng ký/hủy đăng ký.
+- Cho ban tổ chức xem danh sách tham dự.
 
-### 4.5. Zalo/SMS
+### Zalo/SMS
 
 - Chọn nhà cung cấp.
-- Chốt chi phí và quota.
-- Lưu consent nhận tin của thành viên.
+- Lưu consent nhận tin.
 - Tạo adapter gửi tin.
-- Tạo log gửi tin.
-- Tạo cơ chế retry và chống gửi trùng.
+- Tạo log gửi và chống gửi trùng.
 
-### 4.6. Quản lý quỹ dòng họ
+### Quản lý quỹ
 
 - Chốt quy trình thu/chi.
-- Tạo model quỹ, giao dịch, chứng từ.
-- Tạo phân quyền kế toán/quản trị/quản sát.
+- Tạo model quỹ và giao dịch.
+- Ghi chứng từ và audit log.
 - Tạo báo cáo thu chi.
-- Tạo cơ chế duyệt giao dịch nếu cần.
-- Không trộn quỹ với dữ liệu phả hệ lõi.
 
-### 4.7. Số hóa tư liệu nâng cao
+### Số hóa tư liệu nâng cao
 
-- Mở rộng metadata cho media.
-- Cho phép gắn tư liệu với thành viên, sự kiện, chi/nhánh.
+- Mở rộng metadata media.
+- Gắn tư liệu với thành viên, sự kiện, chi/nhánh.
 - Nghiên cứu OCR nếu có nhu cầu.
-- Nghiên cứu phục dựng ảnh nếu có nhu cầu và quy tắc đồng ý.
-- Tạo quy trình duyệt tư liệu trước khi công khai.
+- Không bật AI/phục dựng ảnh nếu chưa có quyết định riêng.
 
-## 5. Permission đề xuất
+## 6. Permission đề xuất
 
 ```text
 kinship.lookup
@@ -96,37 +94,15 @@ family-tree.export
 qr-codes.manage
 event-registrations.manage
 external-notifications.manage
-funds.view
 funds.manage
 advanced-archives.manage
 ```
 
-## 6. Kiểm thử chung
-
-- Không làm hỏng luồng giai đoạn 1-4.
-- Kiểm thử quyền riêng tư cho mọi tính năng mở rộng.
-- Kiểm thử dữ liệu lớn nếu tính năng liên quan phả đồ.
-- Kiểm thử tích hợp ngoài bằng sandbox trước.
-- Kiểm thử rollback nếu tính năng có migration lớn.
-
 ## 7. Ngoài phạm vi mặc định
 
-Các tính năng dưới đây chỉ triển khai khi có quyết định riêng:
-
+- Ứng dụng mobile riêng.
+- Tích hợp thanh toán.
 - AI kể chuyện gia phả.
 - Phục dựng ảnh tự động.
-- Tích hợp thanh toán.
-- Ứng dụng mobile riêng.
 - Đồng bộ dữ liệu với nền tảng bên ngoài.
-
-## 8. Kết quả bàn giao
-
-Mỗi mini-phase phải bàn giao riêng:
-
-- Đặc tả tính năng.
-- Migration/API/UI tương ứng.
-- Permission tương ứng.
-- Checklist nghiệm thu riêng.
-- Kết quả test và build.
-- Ghi chú vận hành nếu có tích hợp ngoài.
 

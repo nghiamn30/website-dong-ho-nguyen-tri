@@ -1,101 +1,93 @@
-# Giai đoạn 05 - Checklist nghiệm thu tính năng mở rộng
+# Giai đoạn 05 - Checklist nghiệm thu tính năng mở rộng và tối ưu vận hành
 
-## 1. Điều kiện chung trước khi triển khai
+## 1. Điều kiện trước nghiệm thu
 
 - [ ] Giai đoạn 1 đã nghiệm thu.
 - [ ] Giai đoạn 2 đã nghiệm thu.
 - [ ] Giai đoạn 3 đã nghiệm thu.
 - [ ] Giai đoạn 4 đã nghiệm thu.
-- [ ] Có quyết định ưu tiên tính năng mở rộng cụ thể.
+- [ ] Có quyết định mini-phase cụ thể.
 - [ ] Có đánh giá rủi ro riêng tư.
-- [ ] Có đánh giá chi phí nếu dùng dịch vụ ngoài.
-- [ ] Có tiêu chí rollback nếu triển khai lỗi.
+- [ ] Có kế hoạch rollback.
 
 ## 2. Tra cứu xưng hô
 
-- [ ] Có API chọn hai thành viên để tra cứu.
+- [ ] Có API chọn hai thành viên.
 - [ ] Hệ thống tìm được đường quan hệ khi dữ liệu đủ.
-- [ ] Hệ thống báo không đủ dữ liệu khi không xác định được.
-- [ ] Kết quả hiển thị quan hệ dễ hiểu.
-- [ ] Kết quả xưng hô được kiểm tra bằng bộ dữ liệu mẫu.
-- [ ] Người thiếu quyền không tra cứu được dữ liệu bị hạn chế.
+- [ ] Hệ thống cảnh báo khi dữ liệu không đủ.
+- [ ] Kết quả xưng hô được kiểm tra bằng dữ liệu mẫu.
+- [ ] Người thiếu quyền không truy cập dữ liệu bị hạn chế.
 
 ## 3. Xuất phả đồ PDF/ảnh
 
 - [ ] Có giao diện chọn phạm vi export.
-- [ ] Có thể export toàn họ nếu dữ liệu trong giới hạn cho phép.
-- [ ] Có thể export theo chi/nhánh.
+- [ ] Có thể export toàn họ hoặc theo chi trong giới hạn cho phép.
 - [ ] File export tải về được.
-- [ ] Layout export không mất node quan trọng.
-- [ ] Cây lớn có cơ chế xử lý hoặc cảnh báo phù hợp.
-- [ ] Người thiếu quyền không export được dữ liệu hạn chế.
+- [ ] Layout không mất node quan trọng.
+- [ ] Cây lớn có cơ chế job hoặc cảnh báo.
+- [ ] Export tôn trọng quyền truy cập.
 
 ## 4. QR Code
 
-- [ ] Có thể tạo QR cho loại đối tượng đã chốt.
-- [ ] QR dẫn tới đúng trang.
+- [ ] Có thể tạo QR cho entity đã chốt.
+- [ ] QR dẫn đúng trang.
 - [ ] QR tôn trọng quyền truy cập.
-- [ ] Người không đủ quyền không xem được nội dung riêng tư sau khi quét QR.
-- [ ] Có thể tải QR về.
-- [ ] Có thể vô hiệu hóa QR nếu cần.
+- [ ] Có thể tải QR.
+- [ ] Có thể vô hiệu hóa QR.
+- [ ] QR không làm lộ dữ liệu chưa publish.
 
 ## 5. Đăng ký tham dự sự kiện
 
-- [ ] Sự kiện có thể bật/tắt đăng ký.
-- [ ] Thành viên có thể đăng ký tham dự.
-- [ ] Thành viên có thể hủy đăng ký nếu còn thời hạn.
-- [ ] Ban tổ chức xem được danh sách đăng ký.
+- [ ] Sự kiện bật/tắt đăng ký được.
+- [ ] Thành viên đăng ký tham dự được.
+- [ ] Thành viên hủy đăng ký được nếu còn hạn.
+- [ ] Ban tổ chức xem danh sách tham dự được.
 - [ ] Hệ thống chống đăng ký trùng.
-- [ ] Có trạng thái hết hạn đăng ký.
-- [ ] Có thể xuất danh sách nếu tính năng được chốt.
 
 ## 6. Zalo/SMS
 
-- [ ] Có cấu hình nhà cung cấp.
-- [ ] Có consent nhận tin của thành viên.
-- [ ] Tin nhắn test gửi thành công ở môi trường thử nghiệm.
+- [ ] Có cấu hình provider.
+- [ ] Có consent nhận tin.
+- [ ] Tin nhắn test gửi thành công ở sandbox.
 - [ ] Có log gửi tin.
 - [ ] Có chống gửi trùng.
-- [ ] Có xử lý lỗi gửi.
-- [ ] Có cách tắt kênh gửi khi phát sinh sự cố.
+- [ ] Có cách tắt kênh gửi khi sự cố.
 
-## 7. Quản lý quỹ dòng họ
+## 7. Quản lý quỹ
 
 - [ ] Có model quỹ.
 - [ ] Có model giao dịch thu/chi.
 - [ ] Có phân quyền quản lý quỹ.
 - [ ] Có thể tạo khoản thu.
 - [ ] Có thể tạo khoản chi.
-- [ ] Có thể đính kèm chứng từ nếu được thiết kế.
+- [ ] Có thể đính kèm chứng từ nếu thiết kế.
 - [ ] Có báo cáo thu chi.
-- [ ] Có audit log cho thay đổi giao dịch.
+- [ ] Có audit log giao dịch.
 
 ## 8. Số hóa tư liệu nâng cao
 
 - [ ] Media có metadata mở rộng.
-- [ ] Tư liệu có thể gắn với thành viên.
-- [ ] Tư liệu có thể gắn với sự kiện.
-- [ ] Tư liệu có thể gắn với chi/nhánh.
+- [ ] Tư liệu gắn được với thành viên.
+- [ ] Tư liệu gắn được với sự kiện.
+- [ ] Tư liệu gắn được với chi/nhánh.
 - [ ] Quyền xem tư liệu hoạt động.
-- [ ] Quy trình duyệt tư liệu hoạt động nếu được thiết kế.
-- [ ] Tính năng OCR hoặc phục dựng ảnh chỉ bật khi đã có quyết định riêng.
+- [ ] OCR/AI chỉ bật khi có quyết định riêng.
 
 ## 9. Kiểm thử và build
 
 - [ ] Tính năng mở rộng có test backend phù hợp.
 - [ ] Tính năng mở rộng có test frontend phù hợp.
-- [ ] Test phân quyền pass.
+- [ ] Test permission pass.
 - [ ] Test riêng tư pass.
 - [ ] Test dữ liệu lớn pass nếu liên quan phả đồ.
-- [ ] Test tích hợp ngoài pass nếu có.
+- [ ] Test provider sandbox pass nếu có tích hợp ngoài.
 - [ ] `pnpm lint` pass.
 - [ ] `pnpm build` pass.
 
 ## 10. Điều kiện nghiệm thu cuối
 
-- [ ] Tính năng mở rộng được triển khai độc lập, không phá vỡ MVP.
-- [ ] Người dùng có quyền sử dụng được luồng chính.
-- [ ] Người thiếu quyền bị chặn đúng.
+- [ ] Mini-phase được triển khai độc lập.
+- [ ] Không phá vỡ MVP giai đoạn 1-4.
 - [ ] Có tài liệu vận hành nếu có tích hợp ngoài.
 - [ ] Có kết quả test/build trước khi bàn giao.
 

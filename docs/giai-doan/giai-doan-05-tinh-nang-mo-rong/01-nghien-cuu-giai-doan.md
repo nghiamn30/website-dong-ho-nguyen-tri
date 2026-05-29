@@ -1,134 +1,129 @@
-# Giai đoạn 05 - Nghiên cứu tính năng mở rộng
+# Nghiên cứu giai đoạn 5: Tính năng mở rộng và tối ưu vận hành
 
-## 1. Cơ sở nghiên cứu
+## 1. Bối cảnh
 
-Tài liệu này được tách từ `docs/nghien-cuu.md`, trọng tâm là nhóm tính năng để sau:
+### Dự án đã có những gì
 
-- Tra cứu xưng hô.
-- Xuất phả đồ PDF/ảnh.
-- QR Code cho hồ sơ hoặc mộ phần.
-- Quản lý quỹ dòng họ.
-- Đăng ký tham dự sự kiện.
-- Thông báo Zalo/SMS.
-- Số hóa tư liệu nâng cao.
+- Sau giai đoạn 1, hệ thống có dữ liệu phả hệ, chi/nhánh, thành viên và phả đồ.
+- Sau giai đoạn 2, hệ thống có ngày giỗ, sự kiện và lịch nhắc.
+- Sau giai đoạn 3, hệ thống có cổng thông tin, bài viết, album và tư liệu.
+- Sau giai đoạn 4, hệ thống có phân quyền theo chi, kiểm duyệt, audit và backup tối thiểu.
+- Các tính năng mở rộng chưa nên triển khai đồng loạt vì phụ thuộc dữ liệu thật, nhu cầu thật và chi phí vận hành.
 
-## 2. Mục tiêu giai đoạn
+Giai đoạn 5 là giai đoạn tối ưu và mở rộng theo nhu cầu thực tế. Mỗi tính năng nên được xem là một mini-phase độc lập.
 
-Giai đoạn này không nên triển khai đồng loạt. Mục tiêu là đánh giá, ưu tiên và triển khai từng tính năng mở rộng dựa trên dữ liệu thật và nhu cầu thực tế sau MVP.
+## 2. Vai trò áp dụng
 
-## 3. Nguyên tắc ưu tiên
+| Vai trò | Phạm vi trong giai đoạn 5 |
+|---|---|
+| Admin | Bật/tắt tính năng mở rộng, cấu hình tích hợp ngoài, kiểm soát vận hành |
+| Trưởng họ | Quyết định ưu tiên tính năng và phạm vi sử dụng toàn họ |
+| Trưởng chi | Sử dụng hoặc quản lý tính năng mở rộng trong chi nếu được cấp quyền |
+| Người bình thường | Sử dụng tính năng đã được bật và được phép truy cập |
 
-Một tính năng mở rộng chỉ nên triển khai khi:
+Không thêm role mặc định trong giai đoạn 5. Nếu tính năng như quản lý quỹ cần role riêng, phải có nghiên cứu và quyết định tách biệt.
 
-1. Dữ liệu từ các giai đoạn 1-4 đã ổn định.
-2. Có người dùng thật cần sử dụng.
-3. Rủi ro riêng tư và vận hành đã được đánh giá.
-4. Chi phí hạ tầng hoặc tích hợp ngoài được chấp nhận.
-5. Có tiêu chí nghiệm thu riêng.
+## 3. Module cần xây dựng
 
-## 4. Nhóm tính năng cần nghiên cứu
+| Module | Mục tiêu |
+|---|---|
+| Tra cứu xưng hô | Tìm quan hệ và cách xưng hô giữa hai người |
+| Xuất phả đồ | Xuất PDF/ảnh phục vụ in ấn hoặc lưu trữ |
+| QR Code | Tạo mã QR cho hồ sơ, mộ phần, sự kiện hoặc tư liệu |
+| Đăng ký tham dự sự kiện | Thành viên xác nhận tham dự sự kiện |
+| Zalo/SMS | Nhắc lịch qua kênh ngoài email |
+| Quản lý quỹ | Theo dõi thu chi dòng họ nếu có nhu cầu |
+| Số hóa tư liệu nâng cao | OCR, metadata nâng cao, liên kết tư liệu sâu hơn |
 
-### 4.1. Tra cứu xưng hô
+## 4. Hiện trạng và khoảng cách
 
-Mục tiêu:
+| Nội dung | Hiện trạng | Khoảng cách cần xử lý |
+|---|---|---|
+| Tra cứu xưng hô | Có cây phả hệ nếu giai đoạn 1 đạt | Cần thuật toán và quy tắc xưng hô |
+| Xuất phả đồ | Có phả đồ hiển thị | Cần layout in/export và xử lý cây lớn |
+| QR Code | Chưa có | Cần public token/slug và kiểm soát quyền |
+| Đăng ký sự kiện | Có sự kiện từ giai đoạn 2 | Cần model đăng ký và danh sách tham dự |
+| Zalo/SMS | Chưa có tích hợp | Cần nhà cung cấp, chi phí và consent |
+| Quản lý quỹ | Chưa có | Cần quy trình tài chính riêng |
+| Số hóa nâng cao | Có media từ giai đoạn 3 | Cần metadata, OCR hoặc xử lý nâng cao |
 
-- Tính quan hệ giữa hai thành viên.
-- Gợi ý cách xưng hô theo vai vế.
-- Hỗ trợ tra cứu trong cùng chi hoặc toàn họ.
+## 5. Dữ liệu đề xuất
 
-Điều kiện:
+### KinshipLookupLog
 
-- Cây gia phả phải chính xác.
-- Quan hệ cha/mẹ/vợ/chồng phải đủ dữ liệu.
-- Cần quy tắc văn hóa xưng hô được thống nhất.
+- `id`
+- `source_person_id`
+- `target_person_id`
+- `result`
+- `created_by`
+- `created_at`
 
-### 4.2. Xuất phả đồ PDF/ảnh
+### ExportJob
 
-Mục tiêu:
+- `id`
+- `export_type`
+- `scope_type`
+- `scope_id`
+- `status`
+- `file_url`
+- `created_by`
+- `created_at`
+- `finished_at`
 
-- Xuất phả đồ để in hoặc chia sẻ.
-- Hỗ trợ khổ lớn hoặc chia trang.
+### QrCode
 
-Điều kiện:
+- `id`
+- `entity_type`
+- `entity_id`
+- `public_token`
+- `target_url`
+- `status`
+- `created_by`
+- `created_at`
 
-- Cần đánh giá thư viện render.
-- Cần thiết kế layout in ấn riêng.
-- Cần xử lý cây lớn nhiều thế hệ.
+### EventRegistration
 
-### 4.3. QR Code
+- `id`
+- `event_id`
+- `user_id`
+- `person_id`
+- `guest_count`
+- `status`
+- `note`
+- `created_at`
+- `updated_at`
 
-Mục tiêu:
+### ExternalNotificationLog
 
-- QR cho hồ sơ thành viên.
-- QR cho mộ phần hoặc tư liệu.
+- `id`
+- `channel`
+- `provider`
+- `recipient`
+- `message_type`
+- `status`
+- `error_message`
+- `created_at`
 
-Điều kiện:
+### FundTransaction
 
-- Link public/private phải rõ quyền.
-- Cần tránh lộ thông tin người đang sống.
-- Cần xác định nội dung QR dẫn tới trang nào.
+- `id`
+- `fund_id`
+- `transaction_type`
+- `amount`
+- `description`
+- `evidence_media_id`
+- `created_by`
+- `approved_by`
+- `created_at`
 
-### 4.4. Quản lý quỹ dòng họ
+## 6. Quyết định thiết kế
 
-Mục tiêu:
-
-- Theo dõi đóng góp, thu chi, công khai minh bạch.
-
-Điều kiện:
-
-- Cần quy trình tài chính được dòng họ thống nhất.
-- Cần phân quyền và kiểm duyệt riêng.
-- Có thể cần xuất báo cáo.
-
-### 4.5. Đăng ký tham dự sự kiện
-
-Mục tiêu:
-
-- Thành viên xác nhận tham dự họp họ, giỗ tổ, hoạt động lớn.
-- Ban tổ chức nắm số lượng người tham gia.
-
-Điều kiện:
-
-- Phân hệ sự kiện phải ổn định.
-- Cần quy tắc đăng ký hộ gia đình hoặc cá nhân.
-
-### 4.6. Zalo/SMS
-
-Mục tiêu:
-
-- Nhắc lịch qua kênh phổ biến hơn email.
-
-Điều kiện:
-
-- Có chi phí gửi tin.
-- Có tích hợp nhà cung cấp.
-- Cần đồng ý nhận tin của thành viên.
-
-### 4.7. Số hóa tư liệu nâng cao
-
-Mục tiêu:
-
-- Gắn tư liệu scan, ảnh cũ, câu chuyện, bản ghi âm vào hồ sơ.
-- Có thể mở rộng OCR hoặc phục dựng ảnh sau này.
-
-Điều kiện:
-
-- Phân hệ media phải ổn định.
-- Cần quy tắc bản quyền và quyền riêng tư.
-
-## 5. Rủi ro chung
-
-- Mở rộng quá sớm làm phức tạp MVP.
-- Tích hợp ngoài gây chi phí vận hành.
-- Tính năng in ấn hoặc xưng hô phụ thuộc dữ liệu rất chính xác.
-- QR hoặc bản đồ có thể làm lộ dữ liệu riêng tư.
-- Quản lý quỹ cần trách nhiệm tài chính rõ ràng.
-
-## 6. Kết quả nghiên cứu cần đạt
-
-- Danh sách ưu tiên tính năng mở rộng.
-- Đánh giá chi phí, rủi ro và lợi ích từng tính năng.
-- Thiết kế sơ bộ cho tính năng được chọn.
-- Tiêu chí go/no-go trước khi triển khai.
-- Checklist nghiệm thu riêng cho từng tính năng.
+1. Giai đoạn 5 không triển khai đồng loạt; mỗi tính năng là một mini-phase có nghiên cứu, kế hoạch và nghiệm thu riêng.
+2. Tính năng mở rộng không được làm thay đổi dữ liệu lõi nếu không có migration và rollback rõ ràng.
+3. Tra cứu xưng hô chỉ triển khai khi dữ liệu quan hệ đủ sạch.
+4. Xuất phả đồ phụ thuộc quyết định hiển thị ở giai đoạn 1, đặc biệt nếu dùng React Flow.
+5. QR Code phải tôn trọng quyền truy cập, không làm lộ dữ liệu riêng tư hoặc dữ liệu chưa được publish.
+6. Zalo/SMS chỉ triển khai khi có consent nhận tin, chi phí và nhà cung cấp rõ ràng.
+7. Quản lý quỹ cần nghiên cứu riêng về quy trình tài chính, audit và phân quyền.
+8. AI/OCR/phục dựng ảnh không thuộc mặc định của giai đoạn 5, chỉ triển khai khi có quyết định riêng.
 

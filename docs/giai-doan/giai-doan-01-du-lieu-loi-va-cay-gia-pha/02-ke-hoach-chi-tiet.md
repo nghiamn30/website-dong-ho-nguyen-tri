@@ -1,54 +1,67 @@
-# Giai đoạn 01 - Kế hoạch chi tiết dữ liệu lõi và cây gia phả
+# Giai đoạn 01 - Kế hoạch chi tiết nền tảng dữ liệu, tổ chức và phân quyền
 
 ## 1. Mục tiêu bàn giao
 
-Sau giai đoạn này, hệ thống phải cho phép quản trị tạo bộ dữ liệu phả hệ ban đầu, xem được cây gia phả và tra cứu thành viên ở mức nền tảng.
+Sau giai đoạn này, hệ thống có dữ liệu lõi để quản lý dòng họ, chi/nhánh, thành viên, quan hệ gia đình và phả đồ lấy thủy tổ làm gốc.
 
-## 2. Nguyên tắc triển khai
+## 2. Căn cứ từ nghiên cứu
 
-- Tận dụng authentication, permission guard, API client, layout và UI system hiện có.
-- Không xây dựng các chức năng lịch giỗ, bài viết, album hoặc kiểm duyệt nâng cao trong giai đoạn này.
-- Ưu tiên dữ liệu đúng và có thể mở rộng hơn là giao diện phả đồ quá phức tạp.
-- Mọi API thay đổi dữ liệu cần lưu audit log nếu nền tảng đã hỗ trợ.
+- Dự án đã có auth, role/permission, audit log, layout và UI nền tảng.
+- Giai đoạn này xây mới các module nghiệp vụ lõi, không xây lịch giỗ, bài viết, album hoặc kiểm duyệt nâng cao.
+- Thông tin cá nhân trong gia phả được xem bởi mọi người, không phân quyền đọc.
+- Phân quyền chỉ áp dụng cho thao tác quản trị dữ liệu.
+- Cần đánh giá React Flow trước khi chốt thư viện hiển thị phả đồ.
+- Vai trò áp dụng: admin, trưởng họ, trưởng chi, người bình thường.
 
-## 3. Thứ tự triển khai đề xuất
+## 3. Các mốc công việc trong giai đoạn
 
-### Bước 1 - Chốt đặc tả dữ liệu
+| Mốc | Nội dung trọng tâm | Kết quả cần đạt |
+|---|---|---|
+| G01-M01 | Chốt dữ liệu lõi và giải pháp phả đồ | Có schema nghiệp vụ và quyết định dùng/không dùng React Flow |
+| G01-M02 | Triển khai database và seed quyền | Có migration, index, enum và 4 role nghiệp vụ |
+| G01-M03 | Triển khai backend API lõi | API dòng họ, chi/nhánh, thành viên, quan hệ và phả đồ hoạt động |
+| G01-M04 | Triển khai giao diện quản trị | Quản trị nhập được dữ liệu phả hệ ban đầu |
+| G01-M05 | Triển khai giao diện xem/tra cứu | Người dùng xem được phả đồ và hồ sơ cá nhân |
+| G01-M06 | Kiểm thử và nghiệm thu | Test, lint, build pass và checklist nghiệm thu đạt |
 
-- Chốt mô hình `Clan`, `Branch`, `Person`, `Relationship`.
-- Chốt enum cho giới tính, trạng thái sống/mất, loại quan hệ, quyền riêng tư.
-- Chốt quy tắc chống trùng thành viên.
-- Chốt cách lưu cây chi/nhánh nhiều tầng.
+## 4. Kế hoạch triển khai theo mốc
 
-### Bước 2 - Cập nhật database
+### G01-M01 - Chốt dữ liệu lõi và giải pháp phả đồ
 
-- Tạo migration cho các bảng nghiệp vụ giai đoạn 1.
-- Thêm index cho tìm kiếm thành viên theo tên, chi/nhánh, đời.
-- Thêm ràng buộc quan hệ để hạn chế dữ liệu mồ côi.
-- Chuẩn bị seed dữ liệu mẫu rất nhỏ để test luồng, không dùng mock data nghiệp vụ lớn.
+- Chốt model `Clan`, `Branch`, `Person`, `Relationship`.
+- Chốt `founder_person_id` để xác định thủy tổ.
+- Chốt `head_person_id` hoặc `is_branch_head` để xác định người đứng đầu chi/nhánh.
+- Đánh giá React Flow bằng prototype nhỏ.
+- Ghi quyết định kỹ thuật: dùng React Flow, dùng thư viện khác hoặc tự render có kiểm soát.
 
-### Bước 3 - Backend API
+### G01-M02 - Database và quyền
 
-Nhóm API cần có:
+- Tạo migration cho các bảng nghiệp vụ.
+- Thêm index tìm kiếm theo tên, đời và chi/nhánh.
+- Seed 4 role: admin, trưởng họ, trưởng chi, người bình thường.
+- Seed permission thao tác: quản lý dòng họ, chi/nhánh, thành viên, quan hệ.
+- Không tạo permission đọc hồ sơ cá nhân vì dữ liệu đọc không phân quyền.
 
-| Nhóm | API đề xuất |
+### G01-M03 - Backend API
+
+| Nhóm | API cần có |
 |---|---|
 | Clan | Lấy/cập nhật thông tin dòng họ |
-| Branch | Tạo, sửa, xóa mềm, lấy cây chi/nhánh |
-| Person | Tạo, sửa, xóa mềm, tìm kiếm, xem chi tiết |
-| Relationship | Gắn, sửa, gỡ quan hệ gia đình |
-| Family tree | Lấy phả đồ toàn họ, theo chi, theo một thành viên |
+| Branch | CRUD chi/nhánh, lấy cây chi/nhánh |
+| Person | CRUD thành viên, tìm kiếm, xem chi tiết |
+| Relationship | Gắn/gỡ cha mẹ, vợ/chồng, con |
+| Family tree | Lấy phả đồ từ thủy tổ, theo chi, theo thành viên |
 
-Yêu cầu backend:
+Yêu cầu:
 
-- Validate dữ liệu đầu vào bằng DTO.
-- Kiểm tra quyền theo permission guard.
-- Không cho xóa cứng bản ghi quan trọng.
-- Trả lỗi nghiệp vụ rõ ràng khi quan hệ không hợp lệ.
+- Validate dữ liệu bằng DTO.
+- Chặn xóa cứng dữ liệu có quan hệ.
+- Ghi audit log khi thay đổi dữ liệu.
+- Trả lỗi rõ khi quan hệ không hợp lệ.
 
-### Bước 4 - Frontend quản trị
+### G01-M04 - Frontend quản trị
 
-Routes quản trị đề xuất:
+Routes đề xuất:
 
 ```text
 /genealogy
@@ -59,18 +72,17 @@ Routes quản trị đề xuất:
 /genealogy/relationships
 ```
 
-Màn hình cần triển khai:
+Màn hình cần có:
 
 - Tổng quan dữ liệu phả hệ.
-- Cấu hình thông tin dòng họ.
+- Cấu hình dòng họ và thủy tổ.
 - Quản lý chi/nhánh dạng cây.
-- Danh sách thành viên có lọc/tìm kiếm.
-- Form hồ sơ thành viên.
-- Form gắn quan hệ cha/mẹ/vợ/chồng/con.
+- Danh sách và form thành viên.
+- Trình gắn quan hệ gia đình.
 
-### Bước 5 - Frontend người dùng
+### G01-M05 - Frontend xem/tra cứu
 
-Routes người dùng đề xuất:
+Routes đề xuất:
 
 ```text
 /family-tree
@@ -79,57 +91,36 @@ Routes người dùng đề xuất:
 /people/[id]
 ```
 
-Màn hình cần triển khai:
+Màn hình cần có:
 
-- Cây gia phả toàn họ.
-- Bộ lọc theo chi/nhánh.
+- Cây gia phả toàn họ bắt đầu từ thủy tổ.
+- Cây gia phả theo chi/nhánh.
 - Tìm kiếm thành viên.
-- Hồ sơ thành viên dạng đọc.
-- Trạng thái rỗng khi chưa có dữ liệu.
+- Hồ sơ cá nhân dạng đọc, không kiểm tra role đọc.
 
-### Bước 6 - Permission tối thiểu
+### G01-M06 - Kiểm thử
 
-Permission đề xuất:
+- Test CRUD dòng họ, chi/nhánh, thành viên.
+- Test gắn quan hệ hợp lệ và không hợp lệ.
+- Test cây phả hệ từ thủy tổ.
+- Test trưởng chi chỉ sửa được dữ liệu thuộc chi nếu đã áp dụng phạm vi.
+- Test mọi vai trò đều xem được hồ sơ và cây phả hệ.
+- Chạy lint, test và build.
 
-```text
-clan.view
-clan.manage
-branches.view
-branches.manage
-persons.view
-persons.manage
-relationships.manage
-family-tree.view
-```
+## 5. Kết quả bàn giao
 
-Vai trò giai đoạn đầu:
+- Migration dữ liệu lõi.
+- API nghiệp vụ giai đoạn 1.
+- UI quản trị và xem phả đồ.
+- Quyết định React Flow.
+- Seed role/permission nghiệp vụ.
+- Checklist nghiệm thu hoàn tất.
 
-- Admin: toàn quyền.
-- Ban phả / ban chấp hành: quản lý phả hệ.
-- Thành viên: xem dữ liệu được phép.
-
-### Bước 7 - Kiểm thử
-
-- Unit test service xử lý chi/nhánh và quan hệ.
-- API test cho CRUD chính.
-- Test validation quan hệ sai.
-- Frontend test cho các form quan trọng.
-- Build production sau khi hoàn tất.
-
-## 4. Kết quả bàn giao
-
-- Database migration giai đoạn 1.
-- Backend API cho dòng họ, chi/nhánh, thành viên, quan hệ và cây gia phả.
-- Frontend route và màn hình quản trị cơ bản.
-- Frontend route xem phả đồ và tra cứu thành viên.
-- Permission seed tương ứng.
-- Tài liệu cập nhật nếu có thay đổi so với kế hoạch.
-
-## 5. Ngoài phạm vi
+## 6. Ngoài phạm vi
 
 - Ngày giỗ âm lịch.
-- Sự kiện, nhắc lịch và email.
+- Sự kiện và nhắc lịch.
 - Bài viết, album, tài liệu.
-- Quy trình đề xuất/duyệt thay đổi nâng cao.
-- Xuất PDF/ảnh, QR code, xưng hô.
+- Quy trình duyệt nâng cao.
+- Xuất PDF/ảnh, QR code, tra cứu xưng hô.
 
