@@ -15,9 +15,12 @@ import { Permissions } from '../common/decorators/permissions.decorator';
 import type { RequestUser } from '../common/interfaces/request-user.interface';
 import {
   CreateBranchDto,
+  CreateMarriageDto,
+  CreateParentChildDto,
   CreatePersonDto,
-  CreateRelationshipDto,
+  TransferLeadershipDto,
   UpdateBranchDto,
+  UpdateMarriageDto,
   UpdatePersonDto,
   UpsertClanDto,
 } from './dto/genealogy.dto';
@@ -30,6 +33,8 @@ export class GenealogyController {
     private readonly genealogyService: GenealogyService,
     private readonly auditLogService: AuditLogService,
   ) {}
+
+  // ----- Clan -----
 
   @Get('clan')
   getClan() {
@@ -49,6 +54,8 @@ export class GenealogyController {
     return result;
   }
 
+  // ----- Branches -----
+
   @Get('branches')
   listBranches() {
     return this.genealogyService.listBranches();
@@ -57,6 +64,11 @@ export class GenealogyController {
   @Get('branches/tree')
   getBranchTree() {
     return this.genealogyService.getBranchTree();
+  }
+
+  @Get('branches/:id/leadership-history')
+  getLeadershipHistory(@Param('id') id: string) {
+    return this.genealogyService.getLeadershipHistory(id);
   }
 
   @Post('branches')
@@ -86,6 +98,25 @@ export class GenealogyController {
     return result;
   }
 
+  @Post('branches/:id/transfer-leadership')
+  @Permissions(GENEALOGY_PERMISSIONS.BRANCHES_MANAGE)
+  async transferLeadership(
+    @Param('id') id: string,
+    @Body() dto: TransferLeadershipDto,
+    @CurrentUser() actor: RequestUser,
+  ) {
+    const result = await this.genealogyService.transferLeadership(
+      id,
+      dto,
+      actor.id,
+    );
+    await this.auditMutation('genealogy.branches.transfer-leadership', actor, {
+      branchId: id,
+      headPersonId: result.headPersonId,
+    });
+    return result;
+  }
+
   @Delete('branches/:id')
   @Permissions(GENEALOGY_PERMISSIONS.BRANCHES_MANAGE)
   async archiveBranch(
@@ -99,6 +130,8 @@ export class GenealogyController {
     return result;
   }
 
+  // ----- Persons -----
+
   @Get('persons')
   listPersons(
     @Query('branchId') branchId?: string,
@@ -110,6 +143,11 @@ export class GenealogyController {
   @Get('persons/:id')
   getPerson(@Param('id') id: string) {
     return this.genealogyService.getPerson(id);
+  }
+
+  @Get('persons/:id/relations')
+  getPersonRelations(@Param('id') id: string) {
+    return this.genealogyService.getPersonRelations(id);
   }
 
   @Post('persons')
@@ -150,34 +188,83 @@ export class GenealogyController {
     return result;
   }
 
-  @Get('relationships')
-  listRelationships() {
-    return this.genealogyService.listRelationships();
+  // ----- Parent/child relations -----
+
+  @Get('parent-child')
+  listParentChild() {
+    return this.genealogyService.listParentChild();
   }
 
-  @Post('relationships')
+  @Post('parent-child')
   @Permissions(GENEALOGY_PERMISSIONS.RELATIONSHIPS_MANAGE)
-  async createRelationship(
-    @Body() dto: CreateRelationshipDto,
+  async createParentChild(
+    @Body() dto: CreateParentChildDto,
     @CurrentUser() actor: RequestUser,
   ) {
-    const result = await this.genealogyService.createRelationship(dto);
-    await this.auditMutation('genealogy.relationships.create', actor, {
-      relationshipId: result.id,
+    const result = await this.genealogyService.createParentChild(dto);
+    await this.auditMutation('genealogy.parent-child.create', actor, {
+      relationId: result.id,
     });
     return result;
   }
 
-  @Delete('relationships/:id')
+  @Delete('parent-child/:id')
   @Permissions(GENEALOGY_PERMISSIONS.RELATIONSHIPS_MANAGE)
-  async deleteRelationship(
+  async deleteParentChild(
     @Param('id') id: string,
     @CurrentUser() actor: RequestUser,
   ) {
-    const result = await this.genealogyService.deleteRelationship(id);
-    await this.auditMutation('genealogy.relationships.delete', actor, result);
+    const result = await this.genealogyService.deleteParentChild(id);
+    await this.auditMutation('genealogy.parent-child.delete', actor, result);
     return result;
   }
+
+  // ----- Marriages -----
+
+  @Get('marriages')
+  listMarriages() {
+    return this.genealogyService.listMarriages();
+  }
+
+  @Post('marriages')
+  @Permissions(GENEALOGY_PERMISSIONS.RELATIONSHIPS_MANAGE)
+  async createMarriage(
+    @Body() dto: CreateMarriageDto,
+    @CurrentUser() actor: RequestUser,
+  ) {
+    const result = await this.genealogyService.createMarriage(dto);
+    await this.auditMutation('genealogy.marriages.create', actor, {
+      marriageId: result.id,
+    });
+    return result;
+  }
+
+  @Patch('marriages/:id')
+  @Permissions(GENEALOGY_PERMISSIONS.RELATIONSHIPS_MANAGE)
+  async updateMarriage(
+    @Param('id') id: string,
+    @Body() dto: UpdateMarriageDto,
+    @CurrentUser() actor: RequestUser,
+  ) {
+    const result = await this.genealogyService.updateMarriage(id, dto);
+    await this.auditMutation('genealogy.marriages.update', actor, {
+      marriageId: result.id,
+    });
+    return result;
+  }
+
+  @Delete('marriages/:id')
+  @Permissions(GENEALOGY_PERMISSIONS.RELATIONSHIPS_MANAGE)
+  async deleteMarriage(
+    @Param('id') id: string,
+    @CurrentUser() actor: RequestUser,
+  ) {
+    const result = await this.genealogyService.deleteMarriage(id);
+    await this.auditMutation('genealogy.marriages.delete', actor, result);
+    return result;
+  }
+
+  // ----- Family tree -----
 
   @Get('family-tree')
   getFamilyTree(

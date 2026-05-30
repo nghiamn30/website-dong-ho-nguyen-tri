@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Matches,
   Max,
   MaxLength,
   Min,
@@ -15,8 +16,12 @@ import {
   CALENDAR_TYPES,
   GENDERS,
   LIFE_STATUSES,
-  RELATIONSHIP_TYPES,
+  MARRIAGE_STATUSES,
+  PARENT_RELATION_TYPES,
+  PARENT_ROLES,
 } from '../genealogy.types';
+
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 function emptyToUndefined(value: unknown) {
   return typeof value === 'string' && value.trim() === '' ? undefined : value;
@@ -122,18 +127,21 @@ export class CreatePersonDto {
 
   @IsOptional()
   @Transform(({ value }) => emptyToUndefined(value))
-  @IsUUID()
-  branchId?: string;
-
-  @IsOptional()
-  @Transform(({ value }) => emptyToUndefined(value))
   @IsString()
   @MaxLength(180)
   commonName?: string;
 
+  @IsIn(GENDERS, { message: 'Giới tính phải là MALE hoặc FEMALE.' })
+  gender!: string;
+
   @IsOptional()
-  @IsIn(GENDERS)
-  gender?: string;
+  @IsBoolean()
+  isClanMember?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @IsUUID()
+  branchId?: string;
 
   @IsOptional()
   @Transform(({ value }) => emptyToUndefined(value))
@@ -147,21 +155,125 @@ export class CreatePersonDto {
   generationNumber?: number;
 
   @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100000)
+  displayOrder?: number;
+
+  // Ngày sinh
+  @IsOptional()
   @Transform(({ value }) => emptyToUndefined(value))
-  @IsString()
-  birthDate?: string;
+  @IsIn(CALENDAR_TYPES)
+  birthDateSource?: string;
 
   @IsOptional()
-  @IsIn(CALENDAR_TYPES)
-  birthCalendarType?: string;
+  @Transform(({ value }) => emptyToUndefined(value))
+  @Matches(DATE_PATTERN, {
+    message: 'Ngày sinh dương phải có dạng YYYY-MM-DD.',
+  })
+  birthSolarDate?: string;
 
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(3000)
+  birthLunarYear?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  birthLunarMonth?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(30)
+  birthLunarDay?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  birthLunarIsLeapMonth?: boolean;
+
+  // Trạng thái sống/mất
   @IsOptional()
   @IsIn(LIFE_STATUSES)
   lifeStatus?: string;
 
+  // Ngày mất
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @IsIn(CALENDAR_TYPES)
+  deathDateSource?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @Matches(DATE_PATTERN, { message: 'Ngày mất dương phải có dạng YYYY-MM-DD.' })
+  deathSolarDate?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(3000)
+  deathLunarYear?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  deathLunarMonth?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(30)
+  deathLunarDay?: number;
+
   @IsOptional()
   @IsBoolean()
-  isBranchHead?: boolean;
+  deathLunarIsLeapMonth?: boolean;
+
+  // Ngày giỗ riêng
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @IsIn(CALENDAR_TYPES)
+  deathAnniversaryCalendar?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  deathAnniversaryMonth?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(31)
+  deathAnniversaryDay?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  deathAnniversaryIsLeapMonth?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @IsString()
+  burialPlace?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @IsString()
+  burialMapUrl?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @IsString()
+  graveImageUrl?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @IsString()
+  deathNote?: string;
 
   @IsOptional()
   @Transform(({ value }) => emptyToUndefined(value))
@@ -187,27 +299,96 @@ export class UpdatePersonDto extends CreatePersonDto {
   @MinLength(2)
   @MaxLength(180)
   declare fullName: string;
+
+  @IsOptional()
+  @IsIn(GENDERS, { message: 'Giới tính phải là MALE hoặc FEMALE.' })
+  declare gender: string;
 }
 
-export class CreateRelationshipDto {
+export class CreateParentChildDto {
   @IsUUID()
-  person1Id!: string;
+  parentPersonId!: string;
 
   @IsUUID()
-  person2Id!: string;
+  childPersonId!: string;
 
-  @IsIn(RELATIONSHIP_TYPES)
-  relationshipType!: string;
+  @IsIn(PARENT_ROLES, { message: 'Vai trò cha/mẹ phải là FATHER hoặc MOTHER.' })
+  parentRole!: string;
+
+  @IsOptional()
+  @IsIn(PARENT_RELATION_TYPES)
+  relationType?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100000)
+  displayOrder?: number;
 
   @IsOptional()
   @Transform(({ value }) => emptyToUndefined(value))
   @IsString()
-  startDate?: string;
+  note?: string;
+}
+
+export class CreateMarriageDto {
+  @IsUUID()
+  husbandPersonId!: string;
+
+  @IsUUID()
+  wifePersonId!: string;
+
+  @IsOptional()
+  @IsIn(MARRIAGE_STATUSES)
+  status?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @Matches(DATE_PATTERN, { message: 'Ngày cưới phải có dạng YYYY-MM-DD.' })
+  marriedSolarDate?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @Matches(DATE_PATTERN, { message: 'Ngày kết thúc phải có dạng YYYY-MM-DD.' })
+  endedSolarDate?: string;
 
   @IsOptional()
   @Transform(({ value }) => emptyToUndefined(value))
   @IsString()
-  endDate?: string;
+  note?: string;
+}
+
+export class UpdateMarriageDto {
+  @IsOptional()
+  @IsIn(MARRIAGE_STATUSES)
+  status?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @Matches(DATE_PATTERN, { message: 'Ngày cưới phải có dạng YYYY-MM-DD.' })
+  marriedSolarDate?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @Matches(DATE_PATTERN, { message: 'Ngày kết thúc phải có dạng YYYY-MM-DD.' })
+  endedSolarDate?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @IsString()
+  note?: string;
+}
+
+export class TransferLeadershipDto {
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @IsUUID()
+  successorPersonId?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @IsString()
+  reason?: string;
 
   @IsOptional()
   @Transform(({ value }) => emptyToUndefined(value))

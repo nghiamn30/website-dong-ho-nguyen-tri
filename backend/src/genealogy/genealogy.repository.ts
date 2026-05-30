@@ -3,30 +3,148 @@ import { randomUUID } from 'crypto';
 import { PrismaService } from '../database/prisma.service';
 import type { Prisma } from '../generated/prisma/client';
 import {
+  BranchLeadershipHistoryRecord,
   BranchRecord,
   BranchStatus,
-  CalendarType,
   ClanRecord,
-  Gender,
-  LifeStatus,
+  LeadershipTransferType,
+  MarriageRecord,
+  MarriageStatus,
+  ParentChildRelationRecord,
+  ParentRole,
   PersonRecord,
-  RelationshipRecord,
-  RelationshipType,
 } from './genealogy.types';
 
 type PrismaClan = Prisma.ClanGetPayload<object>;
 type PrismaBranch = Prisma.BranchGetPayload<object>;
 type PrismaPerson = Prisma.PersonGetPayload<object>;
-type PrismaRelationship = Prisma.RelationshipGetPayload<object>;
+type PrismaParentChild = Prisma.ParentChildRelationGetPayload<object>;
+type PrismaMarriage = Prisma.MarriageGetPayload<object>;
+type PrismaLeadership = Prisma.BranchLeadershipHistoryGetPayload<object>;
+
+export interface UpsertClanInput {
+  name: string;
+  description?: string;
+  history?: string;
+  founderPersonId?: string;
+  logoUrl?: string;
+  bannerUrl?: string;
+  ancestralHouseName?: string;
+  ancestralHouseAddress?: string;
+  contactInformation?: string;
+}
+
+export interface SaveBranchInput {
+  clanId: string;
+  parentBranchId: string | null;
+  name: string;
+  type: string;
+  description: string | null;
+  headPersonId: string | null;
+  displayOrder: number;
+}
+
+export interface UpdateBranchInput {
+  parentBranchId?: string | null;
+  name?: string;
+  type?: string;
+  description?: string | null;
+  headPersonId?: string | null;
+  displayOrder?: number;
+  status?: BranchStatus;
+}
+
+export interface PersonWriteModel {
+  clanId: string;
+  branchId: string | null;
+  fullName: string;
+  commonName: string | null;
+  gender: PersonRecord['gender'];
+  isClanMember: boolean;
+  avatarUrl: string | null;
+  generationNumber: number | null;
+  displayOrder: number;
+  birthDateSource: PersonRecord['birthDateSource'] | null;
+  birthSolarDate: string | null;
+  birthLunarYear: number | null;
+  birthLunarMonth: number | null;
+  birthLunarDay: number | null;
+  birthLunarIsLeapMonth: boolean;
+  lifeStatus: PersonRecord['lifeStatus'];
+  deathDateSource: PersonRecord['deathDateSource'] | null;
+  deathSolarDate: string | null;
+  deathLunarYear: number | null;
+  deathLunarMonth: number | null;
+  deathLunarDay: number | null;
+  deathLunarIsLeapMonth: boolean;
+  deathAnniversaryCalendar: PersonRecord['deathAnniversaryCalendar'] | null;
+  deathAnniversaryMonth: number | null;
+  deathAnniversaryDay: number | null;
+  deathAnniversaryIsLeapMonth: boolean;
+  burialPlace: string | null;
+  burialMapUrl: string | null;
+  graveImageUrl: string | null;
+  deathNote: string | null;
+  biography: string | null;
+  hometown: string | null;
+  currentLocation: string | null;
+}
+
+export interface SaveParentChildInput {
+  clanId: string;
+  parentPersonId: string;
+  childPersonId: string;
+  parentRole: ParentRole;
+  relationType: ParentChildRelationRecord['relationType'];
+  displayOrder: number;
+  note: string | null;
+}
+
+export interface SaveMarriageInput {
+  clanId: string;
+  husbandPersonId: string;
+  wifePersonId: string;
+  status: MarriageStatus;
+  marriedSolarDate: string | null;
+  endedSolarDate: string | null;
+  note: string | null;
+}
+
+export interface UpdateMarriageInput {
+  status?: MarriageStatus;
+  marriedSolarDate?: string | null;
+  endedSolarDate?: string | null;
+  note?: string | null;
+}
+
+export interface SaveLeadershipInput {
+  branchId: string;
+  predecessorPersonId: string | null;
+  successorPersonId: string | null;
+  transferType: LeadershipTransferType;
+  transferDate?: string;
+  reason: string | null;
+  note: string | null;
+  createdByUserId: string | null;
+}
+
+export interface ListPersonsInput {
+  branchId?: string;
+  search?: string;
+}
 
 @Injectable()
 export class GenealogyRepository {
   private memoryClan: ClanRecord | null = null;
   private readonly memoryBranches: BranchRecord[] = [];
   private readonly memoryPersons: PersonRecord[] = [];
-  private readonly memoryRelationships: RelationshipRecord[] = [];
+  private readonly memoryParentChild: ParentChildRelationRecord[] = [];
+  private readonly memoryMarriages: MarriageRecord[] = [];
+  private readonly memoryLeadership: BranchLeadershipHistoryRecord[] = [];
 
   constructor(@Optional() private readonly prismaService?: PrismaService) {}
+
+  // ----- Clan -----
 
   async getClan(): Promise<ClanRecord | null> {
     const prisma = this.getPrisma();
@@ -46,28 +164,28 @@ export class GenealogyRepository {
     const current = await this.getClan();
     const now = new Date().toISOString();
 
-    if (prisma) {
-      const data = {
-        name: input.name,
-        description: input.description,
-        history: input.history,
-        founderPersonId: input.founderPersonId,
-        logoUrl: input.logoUrl,
-        bannerUrl: input.bannerUrl,
-        ancestralHouseName: input.ancestralHouseName,
-        ancestralHouseAddress: input.ancestralHouseAddress,
-        contactInformation: input.contactInformation,
-      };
+    const data = {
+      name: input.name,
+      description: input.description ?? null,
+      history: input.history ?? null,
+      founderPersonId: input.founderPersonId ?? null,
+      logoUrl: input.logoUrl ?? null,
+      bannerUrl: input.bannerUrl ?? null,
+      ancestralHouseName: input.ancestralHouseName ?? null,
+      ancestralHouseAddress: input.ancestralHouseAddress ?? null,
+      contactInformation: input.contactInformation ?? null,
+    };
 
+    if (prisma) {
       const clan = current
         ? await prisma.clan.update({ where: { id: current.id }, data })
         : await prisma.clan.create({ data });
-
       return toClanRecord(clan);
     }
 
     this.memoryClan = {
       id: current?.id ?? randomUUID(),
+      singletonKey: true,
       name: input.name,
       description: input.description,
       history: input.history,
@@ -84,6 +202,28 @@ export class GenealogyRepository {
     return structuredClone(this.memoryClan);
   }
 
+  async setFounder(
+    clanId: string,
+    founderPersonId: string | null,
+  ): Promise<void> {
+    const prisma = this.getPrisma();
+
+    if (prisma) {
+      await prisma.clan.update({
+        where: { id: clanId },
+        data: { founderPersonId },
+      });
+      return;
+    }
+
+    if (this.memoryClan && this.memoryClan.id === clanId) {
+      this.memoryClan.founderPersonId = founderPersonId ?? undefined;
+      this.memoryClan.updatedAt = new Date().toISOString();
+    }
+  }
+
+  // ----- Branch -----
+
   async listBranches(): Promise<BranchRecord[]> {
     const prisma = this.getPrisma();
 
@@ -91,12 +231,11 @@ export class GenealogyRepository {
       const branches = await prisma.branch.findMany({
         orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
       });
-
       return branches.map(toBranchRecord);
     }
 
     return structuredClone(
-      this.memoryBranches.sort(
+      [...this.memoryBranches].sort(
         (left, right) =>
           left.displayOrder - right.displayOrder ||
           left.name.localeCompare(right.name),
@@ -133,18 +272,17 @@ export class GenealogyRepository {
           displayOrder: input.displayOrder,
         },
       });
-
       return toBranchRecord(branch);
     }
 
     const branch: BranchRecord = {
       id: randomUUID(),
       clanId: input.clanId,
-      parentBranchId: input.parentBranchId,
+      parentBranchId: input.parentBranchId ?? undefined,
       name: input.name,
       type: input.type,
-      description: input.description,
-      headPersonId: input.headPersonId,
+      description: input.description ?? undefined,
+      headPersonId: input.headPersonId ?? undefined,
       displayOrder: input.displayOrder,
       status: 'ACTIVE',
       createdAt: now,
@@ -156,25 +294,58 @@ export class GenealogyRepository {
 
   async updateBranch(
     id: string,
-    input: Partial<SaveBranchInput> & { status?: BranchStatus },
+    input: UpdateBranchInput,
   ): Promise<BranchRecord> {
     const prisma = this.getPrisma();
 
     if (prisma) {
       const branch = await prisma.branch.update({
         where: { id },
-        data: input,
+        data: {
+          parentBranchId: input.parentBranchId,
+          name: input.name,
+          type: input.type,
+          description: input.description,
+          headPersonId: input.headPersonId,
+          displayOrder: input.displayOrder,
+          status: input.status,
+        },
       });
-
       return toBranchRecord(branch);
     }
 
     const branch = this.findMemoryBranchOrThrow(id);
-    Object.assign(branch, removeUndefined(input), {
-      updatedAt: new Date().toISOString(),
-    });
+    applyOptional(branch, 'parentBranchId', input.parentBranchId);
+    applyOptional(branch, 'name', input.name);
+    applyOptional(branch, 'type', input.type);
+    applyOptional(branch, 'description', input.description);
+    applyOptional(branch, 'headPersonId', input.headPersonId);
+    applyOptional(branch, 'displayOrder', input.displayOrder);
+    applyOptional(branch, 'status', input.status);
+    branch.updatedAt = new Date().toISOString();
     return structuredClone(branch);
   }
+
+  async clearBranchHeadForPerson(personId: string): Promise<void> {
+    const prisma = this.getPrisma();
+
+    if (prisma) {
+      await prisma.branch.updateMany({
+        where: { headPersonId: personId },
+        data: { headPersonId: null },
+      });
+      return;
+    }
+
+    for (const branch of this.memoryBranches) {
+      if (branch.headPersonId === personId) {
+        branch.headPersonId = undefined;
+        branch.updatedAt = new Date().toISOString();
+      }
+    }
+  }
+
+  // ----- Person -----
 
   async listPersons(input: ListPersonsInput = {}): Promise<PersonRecord[]> {
     const prisma = this.getPrisma();
@@ -188,9 +359,12 @@ export class GenealogyRepository {
             ? { contains: normalizedSearch, mode: 'insensitive' }
             : undefined,
         },
-        orderBy: [{ generationNumber: 'asc' }, { fullName: 'asc' }],
+        orderBy: [
+          { generationNumber: 'asc' },
+          { displayOrder: 'asc' },
+          { fullName: 'asc' },
+        ],
       });
-
       return persons.map(toPersonRecord);
     }
 
@@ -213,6 +387,7 @@ export class GenealogyRepository {
           (left, right) =>
             (left.generationNumber ?? 9999) -
               (right.generationNumber ?? 9999) ||
+            left.displayOrder - right.displayOrder ||
             left.fullName.localeCompare(right.fullName),
         ),
     );
@@ -231,21 +406,20 @@ export class GenealogyRepository {
     );
   }
 
-  async createPerson(input: SavePersonInput): Promise<PersonRecord> {
+  async createPerson(input: PersonWriteModel): Promise<PersonRecord> {
     const prisma = this.getPrisma();
     const now = new Date().toISOString();
 
     if (prisma) {
       const person = await prisma.person.create({
-        data: toPrismaPersonCreateInput(input),
+        data: toPrismaPersonData(input) as Prisma.PersonUncheckedCreateInput,
       });
-
       return toPersonRecord(person);
     }
 
     const person: PersonRecord = {
+      ...writeModelToRecord(input),
       id: randomUUID(),
-      ...input,
       createdAt: now,
       updatedAt: now,
     };
@@ -255,24 +429,31 @@ export class GenealogyRepository {
 
   async updatePerson(
     id: string,
-    input: Partial<SavePersonInput>,
+    input: PersonWriteModel,
   ): Promise<PersonRecord> {
     const prisma = this.getPrisma();
 
     if (prisma) {
       const person = await prisma.person.update({
         where: { id },
-        data: toPrismaPersonUpdateInput(input),
+        data: toPrismaPersonData(input),
       });
-
       return toPersonRecord(person);
     }
 
-    const person = this.findMemoryPersonOrThrow(id);
-    Object.assign(person, removeUndefined(input), {
+    const index = this.memoryPersons.findIndex((person) => person.id === id);
+    if (index < 0) {
+      throw new Error(`Person ${id} not found.`);
+    }
+    const existing = this.memoryPersons[index];
+    const updated: PersonRecord = {
+      ...writeModelToRecord(input),
+      id: existing.id,
+      createdAt: existing.createdAt,
       updatedAt: new Date().toISOString(),
-    });
-    return structuredClone(person);
+    };
+    this.memoryPersons[index] = updated;
+    return structuredClone(updated);
   }
 
   async deletePerson(id: string): Promise<void> {
@@ -289,124 +470,315 @@ export class GenealogyRepository {
     }
   }
 
-  async listRelationships(): Promise<RelationshipRecord[]> {
-    const prisma = this.getPrisma();
-
-    if (prisma) {
-      const relationships = await prisma.relationship.findMany({
-        orderBy: { createdAt: 'asc' },
-      });
-      return relationships.map(toRelationshipRecord);
-    }
-
-    return structuredClone(this.memoryRelationships);
-  }
-
-  async findRelationship(id: string): Promise<RelationshipRecord | null> {
-    const prisma = this.getPrisma();
-
-    if (prisma) {
-      const relationship = await prisma.relationship.findUnique({
-        where: { id },
-      });
-      return relationship ? toRelationshipRecord(relationship) : null;
-    }
-
-    return structuredClone(
-      this.memoryRelationships.find((relationship) => relationship.id === id) ??
-        null,
-    );
-  }
-
-  async relationshipExists(input: {
-    person1Id: string;
-    person2Id: string;
-    relationshipType: RelationshipType;
-  }) {
-    const prisma = this.getPrisma();
-
-    if (prisma) {
-      const count = await prisma.relationship.count({ where: input });
-      return count > 0;
-    }
-
-    return this.memoryRelationships.some(
-      (relationship) =>
-        relationship.person1Id === input.person1Id &&
-        relationship.person2Id === input.person2Id &&
-        relationship.relationshipType === input.relationshipType,
-    );
-  }
-
-  async createRelationship(
-    input: SaveRelationshipInput,
-  ): Promise<RelationshipRecord> {
-    const prisma = this.getPrisma();
-    const now = new Date().toISOString();
-
-    if (prisma) {
-      const relationship = await prisma.relationship.create({
-        data: {
-          person1Id: input.person1Id,
-          person2Id: input.person2Id,
-          relationshipType: input.relationshipType,
-          startDate: input.startDate,
-          endDate: input.endDate,
-          note: input.note,
-        },
-      });
-
-      return toRelationshipRecord(relationship);
-    }
-
-    const relationship: RelationshipRecord = {
-      id: randomUUID(),
-      ...input,
-      createdAt: now,
-      updatedAt: now,
-    };
-    this.memoryRelationships.push(relationship);
-    return structuredClone(relationship);
-  }
-
-  async deleteRelationship(id: string): Promise<void> {
-    const prisma = this.getPrisma();
-
-    if (prisma) {
-      await prisma.relationship.delete({ where: { id } });
-      return;
-    }
-
-    const index = this.memoryRelationships.findIndex((item) => item.id === id);
-    if (index >= 0) {
-      this.memoryRelationships.splice(index, 1);
-    }
-  }
-
   async countPersonReferences(personId: string) {
     const prisma = this.getPrisma();
 
     if (prisma) {
-      const [relationships, founderClans, headedBranches] = await Promise.all([
-        prisma.relationship.count({
-          where: { OR: [{ person1Id: personId }, { person2Id: personId }] },
-        }),
-        prisma.clan.count({ where: { founderPersonId: personId } }),
-        prisma.branch.count({ where: { headPersonId: personId } }),
-      ]);
-
-      return { relationships, founderClans, headedBranches };
+      const [asParent, asChild, marriages, founderClans, headedBranches] =
+        await Promise.all([
+          prisma.parentChildRelation.count({
+            where: { parentPersonId: personId },
+          }),
+          prisma.parentChildRelation.count({
+            where: { childPersonId: personId },
+          }),
+          prisma.marriage.count({
+            where: {
+              OR: [{ husbandPersonId: personId }, { wifePersonId: personId }],
+            },
+          }),
+          prisma.clan.count({ where: { founderPersonId: personId } }),
+          prisma.branch.count({ where: { headPersonId: personId } }),
+        ]);
+      return {
+        parentChildRelations: asParent + asChild,
+        marriages,
+        founderClans,
+        headedBranches,
+      };
     }
 
     return {
-      relationships: this.memoryRelationships.filter(
-        (item) => item.person1Id === personId || item.person2Id === personId,
+      parentChildRelations: this.memoryParentChild.filter(
+        (relation) =>
+          relation.parentPersonId === personId ||
+          relation.childPersonId === personId,
+      ).length,
+      marriages: this.memoryMarriages.filter(
+        (marriage) =>
+          marriage.husbandPersonId === personId ||
+          marriage.wifePersonId === personId,
       ).length,
       founderClans: this.memoryClan?.founderPersonId === personId ? 1 : 0,
       headedBranches: this.memoryBranches.filter(
         (branch) => branch.headPersonId === personId,
       ).length,
     };
+  }
+
+  // ----- Parent/child relations -----
+
+  async listParentChild(): Promise<ParentChildRelationRecord[]> {
+    const prisma = this.getPrisma();
+
+    if (prisma) {
+      const relations = await prisma.parentChildRelation.findMany({
+        orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
+      });
+      return relations.map(toParentChildRecord);
+    }
+
+    return structuredClone(this.memoryParentChild);
+  }
+
+  async findParentChild(id: string): Promise<ParentChildRelationRecord | null> {
+    const prisma = this.getPrisma();
+
+    if (prisma) {
+      const relation = await prisma.parentChildRelation.findUnique({
+        where: { id },
+      });
+      return relation ? toParentChildRecord(relation) : null;
+    }
+
+    return structuredClone(
+      this.memoryParentChild.find((relation) => relation.id === id) ?? null,
+    );
+  }
+
+  async createParentChild(
+    input: SaveParentChildInput,
+  ): Promise<ParentChildRelationRecord> {
+    const prisma = this.getPrisma();
+    const now = new Date().toISOString();
+
+    if (prisma) {
+      const relation = await prisma.parentChildRelation.create({
+        data: {
+          clanId: input.clanId,
+          parentPersonId: input.parentPersonId,
+          childPersonId: input.childPersonId,
+          parentRole: input.parentRole,
+          relationType: input.relationType,
+          displayOrder: input.displayOrder,
+          note: input.note,
+        },
+      });
+      return toParentChildRecord(relation);
+    }
+
+    const relation: ParentChildRelationRecord = {
+      id: randomUUID(),
+      clanId: input.clanId,
+      parentPersonId: input.parentPersonId,
+      childPersonId: input.childPersonId,
+      parentRole: input.parentRole,
+      relationType: input.relationType,
+      displayOrder: input.displayOrder,
+      note: input.note ?? undefined,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.memoryParentChild.push(relation);
+    return structuredClone(relation);
+  }
+
+  async deleteParentChild(id: string): Promise<void> {
+    const prisma = this.getPrisma();
+
+    if (prisma) {
+      await prisma.parentChildRelation.delete({ where: { id } });
+      return;
+    }
+
+    const index = this.memoryParentChild.findIndex(
+      (relation) => relation.id === id,
+    );
+    if (index >= 0) {
+      this.memoryParentChild.splice(index, 1);
+    }
+  }
+
+  // ----- Marriages -----
+
+  async listMarriages(): Promise<MarriageRecord[]> {
+    const prisma = this.getPrisma();
+
+    if (prisma) {
+      const marriages = await prisma.marriage.findMany({
+        orderBy: { createdAt: 'asc' },
+      });
+      return marriages.map(toMarriageRecord);
+    }
+
+    return structuredClone(this.memoryMarriages);
+  }
+
+  async findMarriage(id: string): Promise<MarriageRecord | null> {
+    const prisma = this.getPrisma();
+
+    if (prisma) {
+      const marriage = await prisma.marriage.findUnique({ where: { id } });
+      return marriage ? toMarriageRecord(marriage) : null;
+    }
+
+    return structuredClone(
+      this.memoryMarriages.find((marriage) => marriage.id === id) ?? null,
+    );
+  }
+
+  async createMarriage(input: SaveMarriageInput): Promise<MarriageRecord> {
+    const prisma = this.getPrisma();
+    const now = new Date().toISOString();
+
+    if (prisma) {
+      const marriage = await prisma.marriage.create({
+        data: {
+          clanId: input.clanId,
+          husbandPersonId: input.husbandPersonId,
+          wifePersonId: input.wifePersonId,
+          status: input.status,
+          marriedSolarDate: toDate(input.marriedSolarDate),
+          endedSolarDate: toDate(input.endedSolarDate),
+          note: input.note,
+        },
+      });
+      return toMarriageRecord(marriage);
+    }
+
+    const marriage: MarriageRecord = {
+      id: randomUUID(),
+      clanId: input.clanId,
+      husbandPersonId: input.husbandPersonId,
+      wifePersonId: input.wifePersonId,
+      status: input.status,
+      marriedSolarDate: input.marriedSolarDate ?? undefined,
+      endedSolarDate: input.endedSolarDate ?? undefined,
+      note: input.note ?? undefined,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.memoryMarriages.push(marriage);
+    return structuredClone(marriage);
+  }
+
+  async updateMarriage(
+    id: string,
+    input: UpdateMarriageInput,
+  ): Promise<MarriageRecord> {
+    const prisma = this.getPrisma();
+
+    if (prisma) {
+      const marriage = await prisma.marriage.update({
+        where: { id },
+        data: {
+          status: input.status,
+          marriedSolarDate:
+            input.marriedSolarDate === undefined
+              ? undefined
+              : toDate(input.marriedSolarDate),
+          endedSolarDate:
+            input.endedSolarDate === undefined
+              ? undefined
+              : toDate(input.endedSolarDate),
+          note: input.note,
+        },
+      });
+      return toMarriageRecord(marriage);
+    }
+
+    const marriage = this.memoryMarriages.find((item) => item.id === id);
+    if (!marriage) {
+      throw new Error(`Marriage ${id} not found.`);
+    }
+    applyOptional(marriage, 'status', input.status);
+    applyOptional(marriage, 'marriedSolarDate', input.marriedSolarDate);
+    applyOptional(marriage, 'endedSolarDate', input.endedSolarDate);
+    applyOptional(marriage, 'note', input.note);
+    marriage.updatedAt = new Date().toISOString();
+    return structuredClone(marriage);
+  }
+
+  async deleteMarriage(id: string): Promise<void> {
+    const prisma = this.getPrisma();
+
+    if (prisma) {
+      await prisma.marriage.delete({ where: { id } });
+      return;
+    }
+
+    const index = this.memoryMarriages.findIndex(
+      (marriage) => marriage.id === id,
+    );
+    if (index >= 0) {
+      this.memoryMarriages.splice(index, 1);
+    }
+  }
+
+  // ----- Branch leadership history -----
+
+  async listLeadershipHistory(
+    branchId: string,
+  ): Promise<BranchLeadershipHistoryRecord[]> {
+    const prisma = this.getPrisma();
+
+    if (prisma) {
+      const history = await prisma.branchLeadershipHistory.findMany({
+        where: { branchId },
+        orderBy: [{ transferDate: 'desc' }, { createdAt: 'desc' }],
+      });
+      return history.map(toLeadershipRecord);
+    }
+
+    return structuredClone(
+      this.memoryLeadership
+        .filter((item) => item.branchId === branchId)
+        .sort(
+          (left, right) =>
+            right.transferDate.localeCompare(left.transferDate) ||
+            right.createdAt.localeCompare(left.createdAt),
+        ),
+    );
+  }
+
+  async createLeadership(
+    input: SaveLeadershipInput,
+  ): Promise<BranchLeadershipHistoryRecord> {
+    const prisma = this.getPrisma();
+    const now = new Date().toISOString();
+
+    if (prisma) {
+      const history = await prisma.branchLeadershipHistory.create({
+        data: {
+          branchId: input.branchId,
+          predecessorPersonId: input.predecessorPersonId,
+          successorPersonId: input.successorPersonId,
+          transferType: input.transferType,
+          transferDate: input.transferDate
+            ? toDate(input.transferDate)!
+            : undefined,
+          reason: input.reason,
+          note: input.note,
+          createdByUserId: input.createdByUserId,
+        },
+      });
+      return toLeadershipRecord(history);
+    }
+
+    const history: BranchLeadershipHistoryRecord = {
+      id: randomUUID(),
+      branchId: input.branchId,
+      predecessorPersonId: input.predecessorPersonId ?? undefined,
+      successorPersonId: input.successorPersonId ?? undefined,
+      transferDate: input.transferDate ?? now.slice(0, 10),
+      transferType: input.transferType,
+      reason: input.reason ?? undefined,
+      note: input.note ?? undefined,
+      createdByUserId: input.createdByUserId ?? undefined,
+      createdAt: now,
+    };
+    this.memoryLeadership.push(history);
+    return structuredClone(history);
   }
 
   private findMemoryBranchOrThrow(id: string) {
@@ -417,75 +789,34 @@ export class GenealogyRepository {
     return branch;
   }
 
-  private findMemoryPersonOrThrow(id: string) {
-    const person = this.memoryPersons.find((item) => item.id === id);
-    if (!person) {
-      throw new Error(`Person ${id} not found.`);
-    }
-    return person;
-  }
-
   private getPrisma() {
     return this.prismaService?.isEnabled() ? this.prismaService : undefined;
   }
 }
 
-export interface UpsertClanInput {
-  name: string;
-  description?: string;
-  history?: string;
-  founderPersonId?: string;
-  logoUrl?: string;
-  bannerUrl?: string;
-  ancestralHouseName?: string;
-  ancestralHouseAddress?: string;
-  contactInformation?: string;
+function applyOptional<T, K extends keyof T>(
+  target: T,
+  key: K,
+  value: T[K] | null | undefined,
+) {
+  if (value === undefined) {
+    return;
+  }
+  target[key] = (value === null ? undefined : value) as T[K];
 }
 
-export interface SaveBranchInput {
-  clanId: string;
-  parentBranchId?: string;
-  name: string;
-  type: string;
-  description?: string;
-  headPersonId?: string;
-  displayOrder: number;
+function toDate(value: string | null | undefined): Date | null {
+  return value ? new Date(`${value}T00:00:00.000Z`) : null;
 }
 
-export interface ListPersonsInput {
-  branchId?: string;
-  search?: string;
-}
-
-export interface SavePersonInput {
-  clanId: string;
-  branchId?: string;
-  fullName: string;
-  commonName?: string;
-  gender: Gender;
-  avatarUrl?: string;
-  generationNumber?: number;
-  birthDate?: string;
-  birthCalendarType: CalendarType;
-  lifeStatus: LifeStatus;
-  isBranchHead: boolean;
-  biography?: string;
-  hometown?: string;
-  currentLocation?: string;
-}
-
-export interface SaveRelationshipInput {
-  person1Id: string;
-  person2Id: string;
-  relationshipType: RelationshipType;
-  startDate?: string;
-  endDate?: string;
-  note?: string;
+function fromDate(value: Date | null): string | undefined {
+  return value ? value.toISOString().slice(0, 10) : undefined;
 }
 
 function toClanRecord(clan: PrismaClan): ClanRecord {
   return {
     id: clan.id,
+    singletonKey: clan.singletonKey,
     name: clan.name,
     description: clan.description ?? undefined,
     history: clan.history ?? undefined,
@@ -524,12 +855,31 @@ function toPersonRecord(person: PrismaPerson): PersonRecord {
     fullName: person.fullName,
     commonName: person.commonName ?? undefined,
     gender: person.gender,
+    isClanMember: person.isClanMember,
     avatarUrl: person.avatarUrl ?? undefined,
     generationNumber: person.generationNumber ?? undefined,
-    birthDate: person.birthDate?.toISOString().slice(0, 10),
-    birthCalendarType: person.birthCalendarType,
+    displayOrder: person.displayOrder,
+    birthDateSource: person.birthDateSource ?? undefined,
+    birthSolarDate: fromDate(person.birthSolarDate),
+    birthLunarYear: person.birthLunarYear ?? undefined,
+    birthLunarMonth: person.birthLunarMonth ?? undefined,
+    birthLunarDay: person.birthLunarDay ?? undefined,
+    birthLunarIsLeapMonth: person.birthLunarIsLeapMonth,
     lifeStatus: person.lifeStatus,
-    isBranchHead: person.isBranchHead,
+    deathDateSource: person.deathDateSource ?? undefined,
+    deathSolarDate: fromDate(person.deathSolarDate),
+    deathLunarYear: person.deathLunarYear ?? undefined,
+    deathLunarMonth: person.deathLunarMonth ?? undefined,
+    deathLunarDay: person.deathLunarDay ?? undefined,
+    deathLunarIsLeapMonth: person.deathLunarIsLeapMonth,
+    deathAnniversaryCalendar: person.deathAnniversaryCalendar ?? undefined,
+    deathAnniversaryMonth: person.deathAnniversaryMonth ?? undefined,
+    deathAnniversaryDay: person.deathAnniversaryDay ?? undefined,
+    deathAnniversaryIsLeapMonth: person.deathAnniversaryIsLeapMonth,
+    burialPlace: person.burialPlace ?? undefined,
+    burialMapUrl: person.burialMapUrl ?? undefined,
+    graveImageUrl: person.graveImageUrl ?? undefined,
+    deathNote: person.deathNote ?? undefined,
     biography: person.biography ?? undefined,
     hometown: person.hometown ?? undefined,
     currentLocation: person.currentLocation ?? undefined,
@@ -538,46 +888,131 @@ function toPersonRecord(person: PrismaPerson): PersonRecord {
   };
 }
 
-function toRelationshipRecord(
-  relationship: PrismaRelationship,
-): RelationshipRecord {
-  return {
-    id: relationship.id,
-    person1Id: relationship.person1Id,
-    person2Id: relationship.person2Id,
-    relationshipType: relationship.relationshipType,
-    startDate: relationship.startDate?.toISOString().slice(0, 10),
-    endDate: relationship.endDate?.toISOString().slice(0, 10),
-    note: relationship.note ?? undefined,
-    createdAt: relationship.createdAt.toISOString(),
-    updatedAt: relationship.updatedAt.toISOString(),
-  };
-}
-
-function toPrismaPersonCreateInput(
-  input: SavePersonInput,
-): Prisma.PersonUncheckedCreateInput {
-  return {
-    ...input,
-    birthDate: input.birthDate
-      ? new Date(`${input.birthDate}T00:00:00Z`)
-      : undefined,
-  };
-}
-
-function toPrismaPersonUpdateInput(
-  input: Partial<SavePersonInput>,
+function toPrismaPersonData(
+  model: PersonWriteModel,
 ): Prisma.PersonUncheckedUpdateInput {
-  return removeUndefined({
-    ...input,
-    birthDate: input.birthDate
-      ? new Date(`${input.birthDate}T00:00:00Z`)
-      : undefined,
-  });
+  return {
+    clanId: model.clanId,
+    branchId: model.branchId,
+    fullName: model.fullName,
+    commonName: model.commonName,
+    gender: model.gender,
+    isClanMember: model.isClanMember,
+    avatarUrl: model.avatarUrl,
+    generationNumber: model.generationNumber,
+    displayOrder: model.displayOrder,
+    birthDateSource: model.birthDateSource,
+    birthSolarDate: toDate(model.birthSolarDate),
+    birthLunarYear: model.birthLunarYear,
+    birthLunarMonth: model.birthLunarMonth,
+    birthLunarDay: model.birthLunarDay,
+    birthLunarIsLeapMonth: model.birthLunarIsLeapMonth,
+    lifeStatus: model.lifeStatus,
+    deathDateSource: model.deathDateSource,
+    deathSolarDate: toDate(model.deathSolarDate),
+    deathLunarYear: model.deathLunarYear,
+    deathLunarMonth: model.deathLunarMonth,
+    deathLunarDay: model.deathLunarDay,
+    deathLunarIsLeapMonth: model.deathLunarIsLeapMonth,
+    deathAnniversaryCalendar: model.deathAnniversaryCalendar,
+    deathAnniversaryMonth: model.deathAnniversaryMonth,
+    deathAnniversaryDay: model.deathAnniversaryDay,
+    deathAnniversaryIsLeapMonth: model.deathAnniversaryIsLeapMonth,
+    burialPlace: model.burialPlace,
+    burialMapUrl: model.burialMapUrl,
+    graveImageUrl: model.graveImageUrl,
+    deathNote: model.deathNote,
+    biography: model.biography,
+    hometown: model.hometown,
+    currentLocation: model.currentLocation,
+  };
 }
 
-function removeUndefined<T extends Record<string, unknown>>(input: T) {
-  return Object.fromEntries(
-    Object.entries(input).filter(([, value]) => value !== undefined),
-  ) as Partial<T>;
+function writeModelToRecord(
+  model: PersonWriteModel,
+): Omit<PersonRecord, 'id' | 'createdAt' | 'updatedAt'> {
+  return {
+    clanId: model.clanId,
+    branchId: model.branchId ?? undefined,
+    fullName: model.fullName,
+    commonName: model.commonName ?? undefined,
+    gender: model.gender,
+    isClanMember: model.isClanMember,
+    avatarUrl: model.avatarUrl ?? undefined,
+    generationNumber: model.generationNumber ?? undefined,
+    displayOrder: model.displayOrder,
+    birthDateSource: model.birthDateSource ?? undefined,
+    birthSolarDate: model.birthSolarDate ?? undefined,
+    birthLunarYear: model.birthLunarYear ?? undefined,
+    birthLunarMonth: model.birthLunarMonth ?? undefined,
+    birthLunarDay: model.birthLunarDay ?? undefined,
+    birthLunarIsLeapMonth: model.birthLunarIsLeapMonth,
+    lifeStatus: model.lifeStatus,
+    deathDateSource: model.deathDateSource ?? undefined,
+    deathSolarDate: model.deathSolarDate ?? undefined,
+    deathLunarYear: model.deathLunarYear ?? undefined,
+    deathLunarMonth: model.deathLunarMonth ?? undefined,
+    deathLunarDay: model.deathLunarDay ?? undefined,
+    deathLunarIsLeapMonth: model.deathLunarIsLeapMonth,
+    deathAnniversaryCalendar: model.deathAnniversaryCalendar ?? undefined,
+    deathAnniversaryMonth: model.deathAnniversaryMonth ?? undefined,
+    deathAnniversaryDay: model.deathAnniversaryDay ?? undefined,
+    deathAnniversaryIsLeapMonth: model.deathAnniversaryIsLeapMonth,
+    burialPlace: model.burialPlace ?? undefined,
+    burialMapUrl: model.burialMapUrl ?? undefined,
+    graveImageUrl: model.graveImageUrl ?? undefined,
+    deathNote: model.deathNote ?? undefined,
+    biography: model.biography ?? undefined,
+    hometown: model.hometown ?? undefined,
+    currentLocation: model.currentLocation ?? undefined,
+  };
+}
+
+function toParentChildRecord(
+  relation: PrismaParentChild,
+): ParentChildRelationRecord {
+  return {
+    id: relation.id,
+    clanId: relation.clanId,
+    parentPersonId: relation.parentPersonId,
+    childPersonId: relation.childPersonId,
+    parentRole: relation.parentRole,
+    relationType: relation.relationType,
+    displayOrder: relation.displayOrder,
+    note: relation.note ?? undefined,
+    createdAt: relation.createdAt.toISOString(),
+    updatedAt: relation.updatedAt.toISOString(),
+  };
+}
+
+function toMarriageRecord(marriage: PrismaMarriage): MarriageRecord {
+  return {
+    id: marriage.id,
+    clanId: marriage.clanId,
+    husbandPersonId: marriage.husbandPersonId,
+    wifePersonId: marriage.wifePersonId,
+    status: marriage.status,
+    marriedSolarDate: fromDate(marriage.marriedSolarDate),
+    endedSolarDate: fromDate(marriage.endedSolarDate),
+    note: marriage.note ?? undefined,
+    createdAt: marriage.createdAt.toISOString(),
+    updatedAt: marriage.updatedAt.toISOString(),
+  };
+}
+
+function toLeadershipRecord(
+  history: PrismaLeadership,
+): BranchLeadershipHistoryRecord {
+  return {
+    id: history.id,
+    branchId: history.branchId,
+    predecessorPersonId: history.predecessorPersonId ?? undefined,
+    successorPersonId: history.successorPersonId ?? undefined,
+    transferDate: history.transferDate.toISOString().slice(0, 10),
+    transferType: history.transferType,
+    reason: history.reason ?? undefined,
+    note: history.note ?? undefined,
+    createdByUserId: history.createdByUserId ?? undefined,
+    createdAt: history.createdAt.toISOString(),
+  };
 }
