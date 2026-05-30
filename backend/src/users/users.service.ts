@@ -70,6 +70,11 @@ export class UsersService implements OnModuleInit {
       .map((user) => this.toManagementUser(user, roles));
   }
 
+  /** Raw account records (including personId) for internal cross-module use. */
+  listAccounts(): Promise<UserRecord[]> {
+    return this.usersRepository.listUsers();
+  }
+
   async listRoles() {
     const roles = await this.usersRepository.listRoles();
 
@@ -242,6 +247,7 @@ export class UsersService implements OnModuleInit {
       id: user.id,
       employeeCode: user.employeeCode,
       name: user.name,
+      personId: user.personId,
       roles: roles.map((role) => ({
         code: role.code,
         name: role.name,

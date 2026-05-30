@@ -5,11 +5,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { AuthModule } from './auth/auth.module';
+import { CalendarModule } from './calendar/calendar.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
 import { validateEnvironment } from './config/env.validation';
 import { DatabaseModule } from './database/database.module';
 import { GenealogyModule } from './genealogy/genealogy.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -25,6 +27,8 @@ import { UsersModule } from './users/users.module';
     AuditLogModule,
     AuthModule,
     GenealogyModule,
+    CalendarModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [

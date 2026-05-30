@@ -8,6 +8,11 @@ export const PERMISSIONS = {
   BRANCHES_MANAGE: 'branches.manage',
   PERSONS_MANAGE: 'persons.manage',
   RELATIONSHIPS_MANAGE: 'relationships.manage',
+  DEATH_ANNIVERSARIES_MANAGE: 'death-anniversaries.manage',
+  EVENTS_MANAGE: 'events.manage',
+  EVENTS_PUBLISH: 'events.publish',
+  NOTIFICATIONS_MANAGE_OWN: 'notifications.manage-own',
+  REMINDER_SETTINGS_MANAGE_OWN: 'reminder-settings.manage-own',
 } as const;
 
 export const ROLE_CODES = {
@@ -31,6 +36,7 @@ export interface UserRecord {
   employeeCode: string;
   name: string;
   passwordHash: string;
+  personId?: string;
   roleCodes: RoleCode[];
   isActive: boolean;
   createdAt: string;

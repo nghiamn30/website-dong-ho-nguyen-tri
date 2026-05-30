@@ -449,6 +449,7 @@ function toUserRecord(user: PrismaUserWithRoles): UserRecord {
     employeeCode: user.employeeCode,
     name: user.name,
     passwordHash: user.passwordHash,
+    personId: user.personId ?? undefined,
     roleCodes: user.roles
       .map((roleLink) => roleLink.role.code as RoleCode)
       .sort(),

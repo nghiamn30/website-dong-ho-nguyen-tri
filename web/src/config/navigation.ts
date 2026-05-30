@@ -1,9 +1,14 @@
 import {
+  Bell,
+  CalendarClock,
+  CalendarDays,
+  CalendarHeart,
   GitBranch,
   History,
   LayoutDashboard,
   Network,
   Search,
+  Settings,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -18,6 +23,11 @@ export const PERMISSIONS = {
   BRANCHES_MANAGE: "branches.manage",
   PERSONS_MANAGE: "persons.manage",
   RELATIONSHIPS_MANAGE: "relationships.manage",
+  DEATH_ANNIVERSARIES_MANAGE: "death-anniversaries.manage",
+  EVENTS_MANAGE: "events.manage",
+  EVENTS_PUBLISH: "events.publish",
+  NOTIFICATIONS_MANAGE_OWN: "notifications.manage-own",
+  REMINDER_SETTINGS_MANAGE_OWN: "reminder-settings.manage-own",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -84,6 +94,41 @@ export const navigationGroups: NavigationGroup[] = [
         href: "/people",
         icon: Search,
         permissions: [],
+      },
+    ],
+  },
+  {
+    title: "Lịch & Giỗ chạp",
+    items: [
+      {
+        title: "Lịch sự kiện",
+        href: "/calendar",
+        icon: CalendarDays,
+        permissions: [],
+      },
+      {
+        title: "Sự kiện",
+        href: "/calendar/events",
+        icon: CalendarClock,
+        permissions: [],
+      },
+      {
+        title: "Ngày giỗ",
+        href: "/calendar/death-anniversaries",
+        icon: CalendarHeart,
+        permissions: [PERMISSIONS.DEATH_ANNIVERSARIES_MANAGE],
+      },
+      {
+        title: "Thông báo",
+        href: "/notifications",
+        icon: Bell,
+        permissions: [PERMISSIONS.NOTIFICATIONS_MANAGE_OWN],
+      },
+      {
+        title: "Cài đặt nhắc lịch",
+        href: "/account/notification-settings",
+        icon: Settings,
+        permissions: [PERMISSIONS.REMINDER_SETTINGS_MANAGE_OWN],
       },
     ],
   },

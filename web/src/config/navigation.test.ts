@@ -19,11 +19,15 @@ describe("navigation", () => {
   it("filters navigation by permissions", () => {
     const visible = getVisibleNavigation([PERMISSIONS.DASHBOARD_VIEW]);
 
-    expect(visible).toHaveLength(2);
+    expect(visible).toHaveLength(3);
     expect(visible[0]?.items.map((item) => item.href)).toEqual(["/dashboard"]);
     expect(visible[1]?.items.map((item) => item.href)).toEqual([
       "/family-tree",
       "/people",
+    ]);
+    expect(visible[2]?.items.map((item) => item.href)).toEqual([
+      "/calendar",
+      "/calendar/events",
     ]);
   });
 

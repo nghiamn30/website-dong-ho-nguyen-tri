@@ -8,5 +8,6 @@ import { GenealogyService } from './genealogy.service';
   imports: [AuditLogModule],
   controllers: [GenealogyController],
   providers: [GenealogyRepository, GenealogyService],
+  exports: [GenealogyRepository, GenealogyService],
 })
 export class GenealogyModule {}
