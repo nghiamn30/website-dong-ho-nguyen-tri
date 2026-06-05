@@ -1,7 +1,7 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import type { Prisma } from '../generated/prisma/client';
-import { AuditLogEntry } from './audit-log.types';
+import { AuditLogEntry, AuditLogFilter } from './audit-log.types';
 
 interface AuditLogSummaryCounts {
   total: number;
@@ -28,6 +28,11 @@ export class AuditLogRepository {
           employeeCode: entry.employeeCode,
           success: entry.success,
           important: entry.important,
+          entityType: entry.entityType,
+          entityId: entry.entityId,
+          beforeData: toPrismaJson(entry.beforeData),
+          afterData: toPrismaJson(entry.afterData),
+          reason: entry.reason,
           ipAddress: entry.ipAddress,
           userAgent: entry.userAgent,
           metadata: toPrismaJson(entry.metadata),
@@ -41,11 +46,19 @@ export class AuditLogRepository {
     return entry;
   }
 
-  async list(limit: number): Promise<AuditLogEntry[]> {
+  async list(limit: number, filter?: AuditLogFilter): Promise<AuditLogEntry[]> {
     const prisma = this.getPrisma();
 
     if (prisma) {
       const logs = await prisma.auditLog.findMany({
+        where: {
+          action: filter?.action,
+          entityType: filter?.entityType,
+          entityId: filter?.entityId,
+          actorUserId: filter?.actorUserId,
+          success: filter?.success,
+          important: filter?.important,
+        },
         orderBy: { createdAt: 'desc' },
         take: limit,
       });
@@ -57,6 +70,11 @@ export class AuditLogRepository {
         employeeCode: entry.employeeCode ?? undefined,
         success: entry.success,
         important: entry.important,
+        entityType: entry.entityType ?? undefined,
+        entityId: entry.entityId ?? undefined,
+        beforeData: normalizeMetadata(entry.beforeData),
+        afterData: normalizeMetadata(entry.afterData),
+        reason: entry.reason ?? undefined,
         ipAddress: entry.ipAddress ?? undefined,
         userAgent: entry.userAgent ?? undefined,
         metadata: normalizeMetadata(entry.metadata),
@@ -64,7 +82,11 @@ export class AuditLogRepository {
       }));
     }
 
-    return structuredClone(this.memoryLogs.slice(0, limit));
+    return structuredClone(
+      this.memoryLogs
+        .filter((entry) => matchesFilter(entry, filter))
+        .slice(0, limit),
+    );
   }
 
   async getSummary(): Promise<AuditLogSummaryCounts> {
@@ -106,6 +128,23 @@ export class AuditLogRepository {
   private getPrisma() {
     return this.prismaService?.isEnabled() ? this.prismaService : undefined;
   }
+}
+
+function matchesFilter(entry: AuditLogEntry, filter?: AuditLogFilter): boolean {
+  if (!filter) return true;
+  if (filter.action && entry.action !== filter.action) return false;
+  if (filter.entityType && entry.entityType !== filter.entityType) return false;
+  if (filter.entityId && entry.entityId !== filter.entityId) return false;
+  if (filter.actorUserId && entry.actorUserId !== filter.actorUserId) {
+    return false;
+  }
+  if (filter.success !== undefined && entry.success !== filter.success) {
+    return false;
+  }
+  if (filter.important !== undefined && entry.important !== filter.important) {
+    return false;
+  }
+  return true;
 }
 
 function normalizeMetadata(

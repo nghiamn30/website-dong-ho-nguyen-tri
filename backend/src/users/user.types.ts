@@ -13,6 +13,20 @@ export const PERMISSIONS = {
   EVENTS_PUBLISH: 'events.publish',
   NOTIFICATIONS_MANAGE_OWN: 'notifications.manage-own',
   REMINDER_SETTINGS_MANAGE_OWN: 'reminder-settings.manage-own',
+  POSTS_MANAGE: 'posts.manage',
+  POSTS_PUBLISH: 'posts.publish',
+  CATEGORIES_MANAGE: 'categories.manage',
+  ALBUMS_MANAGE: 'albums.manage',
+  MEDIA_UPLOAD: 'media.upload',
+  MEDIA_MANAGE: 'media.manage',
+  PAGES_MANAGE: 'pages.manage',
+  // Giai đoạn 4: quản trị nâng cao, kiểm duyệt và an toàn dữ liệu.
+  ROLES_MANAGE_BRANCH_SCOPE: 'roles.manage-branch-scope',
+  CHANGE_REQUESTS_CREATE: 'change-requests.create',
+  CHANGE_REQUESTS_REVIEW: 'change-requests.review',
+  DECEASED_INFO_UPDATE_BRANCH: 'deceased-info.update-branch',
+  BACKUP_RUN: 'backup.run',
+  BACKUP_RESTORE: 'backup.restore',
 } as const;
 
 export const ROLE_CODES = {

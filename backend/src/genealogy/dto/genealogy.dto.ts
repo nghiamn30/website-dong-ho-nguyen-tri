@@ -379,6 +379,85 @@ export class UpdateMarriageDto {
   note?: string;
 }
 
+/**
+ * Giai đoạn 4: cập nhật thông tin ngày mất cho thành viên trong chi.
+ * Đánh dấu lifeStatus = DECEASED và ghi nhận ngày mất/ngày giỗ.
+ */
+export class UpdateDeceasedInfoDto {
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @IsIn(CALENDAR_TYPES)
+  deathDateSource?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @Matches(DATE_PATTERN, { message: 'Ngày mất dương phải có dạng YYYY-MM-DD.' })
+  deathSolarDate?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(3000)
+  deathLunarYear?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  deathLunarMonth?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(30)
+  deathLunarDay?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  deathLunarIsLeapMonth?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @IsIn(CALENDAR_TYPES)
+  deathAnniversaryCalendar?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  deathAnniversaryMonth?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(31)
+  deathAnniversaryDay?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  deathAnniversaryIsLeapMonth?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @IsString()
+  burialPlace?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @IsString()
+  burialMapUrl?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @IsString()
+  graveImageUrl?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyToUndefined(value))
+  @IsString()
+  deathNote?: string;
+}
+
 export class TransferLeadershipDto {
   @IsOptional()
   @Transform(({ value }) => emptyToUndefined(value))

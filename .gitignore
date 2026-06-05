@@ -19,6 +19,7 @@ web/.env.local
 backend/dist/
 backend/node_modules/
 backend/coverage/
+backend/storage/
 backend/.local-*.log
 backend/.env
 backend/.env.local

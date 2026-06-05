@@ -5,7 +5,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { AuthModule } from './auth/auth.module';
+import { BranchScopeModule } from './branch-scope/branch-scope.module';
 import { CalendarModule } from './calendar/calendar.module';
+import { ChangeRequestsModule } from './change-requests/change-requests.module';
+import { ContentModule } from './content/content.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
 import { validateEnvironment } from './config/env.validation';
@@ -27,7 +30,10 @@ import { UsersModule } from './users/users.module';
     AuditLogModule,
     AuthModule,
     GenealogyModule,
+    BranchScopeModule,
+    ChangeRequestsModule,
     CalendarModule,
+    ContentModule,
     NotificationsModule,
   ],
   controllers: [AppController],

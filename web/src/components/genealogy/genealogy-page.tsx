@@ -1278,7 +1278,12 @@ function PersonDetail({
         {person.lifeStatus === "DECEASED" ? (
           <>
             <Info label="Ngày mất dương" value={person.deathSolarDate} />
+            <Info label="Ngày mất âm" value={formatDeathLunar(person)} />
+            <Info label="Ngày giỗ" value={formatAnniversary(person)} />
             <Info label="Nơi an táng" value={person.burialPlace} />
+            <div className="md:col-span-2">
+              <Info label="Ghi chú tang lễ" value={person.deathNote} />
+            </div>
           </>
         ) : null}
         <Info label="Quê quán" value={person.hometown} />
@@ -1896,5 +1901,22 @@ function formatLunar(person: PersonRecord) {
   if (!person.birthLunarYear) return undefined;
   return `${person.birthLunarDay}/${person.birthLunarMonth}/${person.birthLunarYear}${
     person.birthLunarIsLeapMonth ? " (nhuận)" : ""
+  }`;
+}
+
+function formatDeathLunar(person: PersonRecord) {
+  if (!person.deathLunarYear) return undefined;
+  return `${person.deathLunarDay}/${person.deathLunarMonth}/${person.deathLunarYear}${
+    person.deathLunarIsLeapMonth ? " (nhuận)" : ""
+  }`;
+}
+
+function formatAnniversary(person: PersonRecord) {
+  if (!person.deathAnniversaryMonth || !person.deathAnniversaryDay) {
+    return undefined;
+  }
+  const calendar = person.deathAnniversaryCalendar === "SOLAR" ? "dương" : "âm";
+  return `${person.deathAnniversaryDay}/${person.deathAnniversaryMonth} (${calendar})${
+    person.deathAnniversaryIsLeapMonth ? " - nhuận" : ""
   }`;
 }

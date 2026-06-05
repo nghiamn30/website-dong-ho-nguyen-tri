@@ -5,6 +5,11 @@ export interface AuditLogEntry {
   employeeCode?: string;
   success: boolean;
   important: boolean;
+  entityType?: string;
+  entityId?: string;
+  beforeData?: Record<string, unknown>;
+  afterData?: Record<string, unknown>;
+  reason?: string;
   ipAddress?: string;
   userAgent?: string;
   metadata?: Record<string, unknown>;
@@ -17,7 +22,21 @@ export interface AuditLogInput {
   employeeCode?: string;
   success: boolean;
   important?: boolean;
+  entityType?: string;
+  entityId?: string;
+  beforeData?: Record<string, unknown>;
+  afterData?: Record<string, unknown>;
+  reason?: string;
   ipAddress?: string;
   userAgent?: string;
   metadata?: Record<string, unknown>;
+}
+
+export interface AuditLogFilter {
+  action?: string;
+  entityType?: string;
+  entityId?: string;
+  actorUserId?: string;
+  success?: boolean;
+  important?: boolean;
 }

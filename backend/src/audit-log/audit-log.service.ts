@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { AuditLogRepository } from './audit-log.repository';
-import { AuditLogEntry, AuditLogInput } from './audit-log.types';
+import {
+  AuditLogEntry,
+  AuditLogFilter,
+  AuditLogInput,
+} from './audit-log.types';
 
 @Injectable()
 export class AuditLogService {
@@ -25,6 +29,11 @@ export class AuditLogService {
       employeeCode: input.employeeCode,
       success: input.success,
       important: input.important ?? false,
+      entityType: input.entityType,
+      entityId: input.entityId,
+      beforeData: input.beforeData,
+      afterData: input.afterData,
+      reason: input.reason,
       ipAddress: input.ipAddress,
       userAgent: input.userAgent,
       metadata: input.metadata,
@@ -36,8 +45,8 @@ export class AuditLogService {
     return result;
   }
 
-  list(): Promise<AuditLogEntry[]> {
-    return this.auditLogRepository.list(this.memoryLimit);
+  list(filter?: AuditLogFilter): Promise<AuditLogEntry[]> {
+    return this.auditLogRepository.list(this.memoryLimit, filter);
   }
 
   async getSummary() {

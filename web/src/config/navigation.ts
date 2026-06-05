@@ -3,12 +3,19 @@ import {
   CalendarClock,
   CalendarDays,
   CalendarHeart,
+  ClipboardCheck,
+  FileText,
+  FolderTree,
   GitBranch,
   History,
+  Image as ImageIcon,
   LayoutDashboard,
+  Library,
   Network,
+  Newspaper,
   Search,
   Settings,
+  ShieldCheck,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -28,6 +35,17 @@ export const PERMISSIONS = {
   EVENTS_PUBLISH: "events.publish",
   NOTIFICATIONS_MANAGE_OWN: "notifications.manage-own",
   REMINDER_SETTINGS_MANAGE_OWN: "reminder-settings.manage-own",
+  POSTS_MANAGE: "posts.manage",
+  POSTS_PUBLISH: "posts.publish",
+  CATEGORIES_MANAGE: "categories.manage",
+  ALBUMS_MANAGE: "albums.manage",
+  MEDIA_UPLOAD: "media.upload",
+  MEDIA_MANAGE: "media.manage",
+  PAGES_MANAGE: "pages.manage",
+  ROLES_MANAGE_BRANCH_SCOPE: "roles.manage-branch-scope",
+  CHANGE_REQUESTS_CREATE: "change-requests.create",
+  CHANGE_REQUESTS_REVIEW: "change-requests.review",
+  DECEASED_INFO_UPDATE_BRANCH: "deceased-info.update-branch",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -133,6 +151,41 @@ export const navigationGroups: NavigationGroup[] = [
     ],
   },
   {
+    title: "Nội dung",
+    items: [
+      {
+        title: "Bài viết",
+        href: "/content/posts",
+        icon: Newspaper,
+        permissions: [PERMISSIONS.POSTS_MANAGE],
+      },
+      {
+        title: "Chuyên mục",
+        href: "/content/categories",
+        icon: FolderTree,
+        permissions: [PERMISSIONS.CATEGORIES_MANAGE],
+      },
+      {
+        title: "Album",
+        href: "/content/albums",
+        icon: ImageIcon,
+        permissions: [PERMISSIONS.ALBUMS_MANAGE],
+      },
+      {
+        title: "Thư viện media",
+        href: "/content/media",
+        icon: Library,
+        permissions: [PERMISSIONS.MEDIA_MANAGE],
+      },
+      {
+        title: "Trang giới thiệu",
+        href: "/content/pages",
+        icon: FileText,
+        permissions: [PERMISSIONS.PAGES_MANAGE],
+      },
+    ],
+  },
+  {
     title: "Quản trị",
     items: [
       {
@@ -140,6 +193,18 @@ export const navigationGroups: NavigationGroup[] = [
         href: "/users",
         icon: Users,
         permissions: [PERMISSIONS.USERS_VIEW],
+      },
+      {
+        title: "Đề xuất chỉnh sửa",
+        href: "/change-requests",
+        icon: ClipboardCheck,
+        permissions: [PERMISSIONS.CHANGE_REQUESTS_CREATE],
+      },
+      {
+        title: "Phân quyền theo chi",
+        href: "/branch-scopes",
+        icon: ShieldCheck,
+        permissions: [PERMISSIONS.ROLES_MANAGE_BRANCH_SCOPE],
       },
       {
         title: "Nhật ký thao tác",
@@ -178,9 +243,16 @@ export function getVisibleNavigation(userPermissions: string[]) {
 }
 
 export function getRouteTitle(pathname: string) {
-  const item = navigationGroups
-    .flatMap((group) => group.items)
-    .find((navigationItem) => navigationItem.href === pathname);
+  const items = navigationGroups.flatMap((group) => group.items);
+  const exact = items.find((navigationItem) => navigationItem.href === pathname);
+  if (exact) {
+    return exact.title;
+  }
 
-  return item?.title ?? "Không tìm thấy";
+  // Best-effort match for nested routes (e.g. /content/posts/new).
+  const prefixMatch = items
+    .filter((navigationItem) => pathname.startsWith(`${navigationItem.href}/`))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+
+  return prefixMatch?.title ?? "Không tìm thấy";
 }

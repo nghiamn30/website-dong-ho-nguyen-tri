@@ -24,12 +24,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PERMISSIONS } from "@/config/navigation";
 import { ApiError } from "@/lib/auth";
 import { formatDateTime as formatDateTimeInVietnam } from "@/lib/date-time";
 import {
   AuditLogEntry,
+  AuditLogFilter,
   AuditLogSummary,
   getAuditLogSummary,
   getAuditLogs,
@@ -40,13 +50,24 @@ export function AuditLogPage() {
   const [summary, setSummary] = useState<AuditLogSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [actionFilter, setActionFilter] = useState("");
+  const [entityTypeFilter, setEntityTypeFilter] = useState("");
+  const [successFilter, setSuccessFilter] = useState<"all" | "true" | "false">(
+    "all",
+  );
+
+  const buildFilter = (): AuditLogFilter => ({
+    action: actionFilter.trim() || undefined,
+    entityType: entityTypeFilter.trim() || undefined,
+    success: successFilter === "all" ? undefined : successFilter,
+  });
 
   const loadLogs = async () => {
     setIsLoading(true);
 
     try {
       const [nextLogs, nextSummary] = await Promise.all([
-        getAuditLogs(),
+        getAuditLogs(buildFilter()),
         getAuditLogSummary(),
       ]);
       setLogs(nextLogs);
@@ -63,32 +84,22 @@ export function AuditLogPage() {
 
   useEffect(() => {
     let mounted = true;
-
-    fetchAuditLogData()
-      .then(({ logs: nextLogs, summary: nextSummary }) => {
-        if (!mounted) {
-          return;
-        }
-
+    Promise.all([getAuditLogs(), getAuditLogSummary()])
+      .then(([nextLogs, nextSummary]) => {
+        if (!mounted) return;
         setLogs(nextLogs);
         setSummary(nextSummary);
         setError(null);
       })
       .catch((caughtError: unknown) => {
-        if (!mounted) {
-          return;
-        }
-
+        if (!mounted) return;
         setLogs([]);
         setSummary(null);
         setError(getErrorMessage(caughtError));
       })
       .finally(() => {
-        if (mounted) {
-          setIsLoading(false);
-        }
+        if (mounted) setIsLoading(false);
       });
-
     return () => {
       mounted = false;
     };
@@ -147,15 +158,48 @@ export function AuditLogPage() {
         width: 140,
       },
       {
-        id: "metadata",
-        header: "Metadata",
-        accessor: (entry) => JSON.stringify(entry.metadata ?? {}),
+        id: "entity",
+        header: "Thực thể",
+        accessor: (entry) => `${entry.entityType ?? ""} ${entry.entityId ?? ""}`,
+        cell: (entry) =>
+          entry.entityType ? (
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs font-medium">{entry.entityType}</span>
+              {entry.entityId ? (
+                <span className="text-xs text-muted-foreground">
+                  {entry.entityId}
+                </span>
+              ) : null}
+            </div>
+          ) : (
+            "-"
+          ),
+        width: 160,
+      },
+      {
+        id: "changes",
+        header: "Trước / Sau",
+        accessor: (entry) =>
+          JSON.stringify({ before: entry.beforeData, after: entry.afterData }),
         cell: (entry) => (
-          <div className="max-w-[360px] whitespace-normal">
-            {formatMetadata(entry.metadata)}
+          <div className="max-w-[360px] space-y-1 whitespace-normal">
+            {entry.beforeData ? (
+              <DiffLine label="Trước" data={entry.beforeData} />
+            ) : null}
+            {entry.afterData ? (
+              <DiffLine label="Sau" data={entry.afterData} />
+            ) : null}
+            {entry.reason ? (
+              <p className="text-xs text-muted-foreground">
+                Lý do: {entry.reason}
+              </p>
+            ) : null}
+            {!entry.beforeData && !entry.afterData
+              ? formatMetadata(entry.metadata)
+              : null}
           </div>
         ),
-        width: 360,
+        width: 380,
       },
     ],
     [],
@@ -195,6 +239,55 @@ export function AuditLogPage() {
           <SummaryCard label="Thất bại" value={summary?.failed} />
           <SummaryCard label="Giới hạn bộ nhớ" value={summary?.memoryLimit} />
         </div>
+
+        <Card>
+          <CardContent className="grid gap-4 pt-6 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
+            <div className="space-y-2">
+              <Label htmlFor="audit-action">Hành động</Label>
+              <Input
+                id="audit-action"
+                value={actionFilter}
+                onChange={(event) => setActionFilter(event.target.value)}
+                placeholder="vd: genealogy.persons.update"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="audit-entity">Loại thực thể</Label>
+              <Input
+                id="audit-entity"
+                value={entityTypeFilter}
+                onChange={(event) => setEntityTypeFilter(event.target.value)}
+                placeholder="vd: person"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Kết quả</Label>
+              <Select
+                value={successFilter}
+                onValueChange={(value) =>
+                  setSuccessFilter(value as "all" | "true" | "false")
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  <SelectItem value="true">Thành công</SelectItem>
+                  <SelectItem value="false">Thất bại</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={isLoading}
+              onClick={() => void loadLogs()}
+            >
+              Lọc
+            </Button>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -280,17 +373,25 @@ function formatMetadata(metadata?: Record<string, unknown>) {
   );
 }
 
+function DiffLine({
+  label,
+  data,
+}: {
+  label: string;
+  data: Record<string, unknown>;
+}) {
+  return (
+    <p className="text-xs">
+      <span className="font-medium">{label}:</span>{" "}
+      <code className="break-words rounded bg-muted px-1 py-0.5">
+        {JSON.stringify(data)}
+      </code>
+    </p>
+  );
+}
+
 function getErrorMessage(error: unknown) {
   return error instanceof ApiError
     ? error.message
     : "Không tải được nhật ký thao tác.";
-}
-
-async function fetchAuditLogData() {
-  const [logs, summary] = await Promise.all([
-    getAuditLogs(),
-    getAuditLogSummary(),
-  ]);
-
-  return { logs, summary };
 }

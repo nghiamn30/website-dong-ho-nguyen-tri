@@ -11,6 +11,7 @@ import {
   CreatePersonDto,
   TransferLeadershipDto,
   UpdateBranchDto,
+  UpdateDeceasedInfoDto,
   UpdateMarriageDto,
   UpdatePersonDto,
   UpsertClanDto,
@@ -290,6 +291,20 @@ export class GenealogyService {
 
     const model = this.buildPersonWriteModel(existing.clanId, existing, dto);
     return this.repository.updatePerson(id, model);
+  }
+
+  /**
+   * Giai đoạn 4: cập nhật ngày mất cho thành viên (đánh dấu đã khuất).
+   * Trả về cả bản ghi trước/sau để controller ghi audit.
+   */
+  async updateDeceasedInfo(id: string, dto: UpdateDeceasedInfoDto) {
+    const existing = await this.findPersonOrThrow(id);
+    const model = this.buildPersonWriteModel(existing.clanId, existing, {
+      ...dto,
+      lifeStatus: 'DECEASED',
+    } as UpdatePersonDto);
+    const updated = await this.repository.updatePerson(id, model);
+    return { before: existing, after: updated };
   }
 
   async deletePerson(id: string) {

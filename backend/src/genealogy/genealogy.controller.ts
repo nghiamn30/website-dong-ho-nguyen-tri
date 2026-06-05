@@ -2,7 +2,9 @@ import {
   Body,
   Controller,
   Delete,
+  forwardRef,
   Get,
+  Inject,
   Param,
   Patch,
   Post,
@@ -10,9 +12,11 @@ import {
   Query,
 } from '@nestjs/common';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { BranchScopeService } from '../branch-scope/branch-scope.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import type { RequestUser } from '../common/interfaces/request-user.interface';
+import { PERMISSIONS } from '../users/user.types';
 import {
   CreateBranchDto,
   CreateMarriageDto,
@@ -20,6 +24,7 @@ import {
   CreatePersonDto,
   TransferLeadershipDto,
   UpdateBranchDto,
+  UpdateDeceasedInfoDto,
   UpdateMarriageDto,
   UpdatePersonDto,
   UpsertClanDto,
@@ -32,6 +37,8 @@ export class GenealogyController {
   constructor(
     private readonly genealogyService: GenealogyService,
     private readonly auditLogService: AuditLogService,
+    @Inject(forwardRef(() => BranchScopeService))
+    private readonly branchScopeService: BranchScopeService,
   ) {}
 
   // ----- Clan -----
@@ -156,9 +163,14 @@ export class GenealogyController {
     @Body() dto: CreatePersonDto,
     @CurrentUser() actor: RequestUser,
   ) {
+    // Trưởng chi chỉ được tạo thành viên trong chi phụ trách.
+    await this.branchScopeService.assertCanActOnBranch(actor, dto.branchId);
     const result = await this.genealogyService.createPerson(dto);
     await this.auditMutation('genealogy.persons.create', actor, {
       personId: result.id,
+      entityType: 'person',
+      entityId: result.id,
+      afterData: result as unknown as Record<string, unknown>,
     });
     return result;
   }
@@ -170,11 +182,51 @@ export class GenealogyController {
     @Body() dto: UpdatePersonDto,
     @CurrentUser() actor: RequestUser,
   ) {
+    const existing = await this.genealogyService.getPerson(id);
+    // Phải nằm trong phạm vi cả chi hiện tại và chi đích (nếu chuyển chi).
+    await this.branchScopeService.assertCanActOnBranch(
+      actor,
+      existing.branchId,
+    );
+    if (dto.branchId !== undefined && dto.branchId !== existing.branchId) {
+      await this.branchScopeService.assertCanActOnBranch(actor, dto.branchId);
+    }
     const result = await this.genealogyService.updatePerson(id, dto);
     await this.auditMutation('genealogy.persons.update', actor, {
       personId: result.id,
+      entityType: 'person',
+      entityId: result.id,
+      beforeData: existing as unknown as Record<string, unknown>,
+      afterData: result as unknown as Record<string, unknown>,
     });
     return result;
+  }
+
+  @Patch('persons/:id/deceased-info')
+  @Permissions(PERMISSIONS.DECEASED_INFO_UPDATE_BRANCH)
+  async updateDeceasedInfo(
+    @Param('id') id: string,
+    @Body() dto: UpdateDeceasedInfoDto,
+    @CurrentUser() actor: RequestUser,
+  ) {
+    const existing = await this.genealogyService.getPerson(id);
+    // Trưởng chi chỉ được cập nhật ngày mất cho thành viên trong chi.
+    await this.branchScopeService.assertCanActOnBranch(
+      actor,
+      existing.branchId,
+    );
+    const { before, after } = await this.genealogyService.updateDeceasedInfo(
+      id,
+      dto,
+    );
+    await this.auditMutation('genealogy.persons.deceased-info', actor, {
+      personId: after.id,
+      entityType: 'person',
+      entityId: after.id,
+      beforeData: before as unknown as Record<string, unknown>,
+      afterData: after as unknown as Record<string, unknown>,
+    });
+    return after;
   }
 
   @Delete('persons/:id')
@@ -183,8 +235,18 @@ export class GenealogyController {
     @Param('id') id: string,
     @CurrentUser() actor: RequestUser,
   ) {
+    const existing = await this.genealogyService.getPerson(id);
+    await this.branchScopeService.assertCanActOnBranch(
+      actor,
+      existing.branchId,
+    );
     const result = await this.genealogyService.deletePerson(id);
-    await this.auditMutation('genealogy.persons.delete', actor, result);
+    await this.auditMutation('genealogy.persons.delete', actor, {
+      ...result,
+      entityType: 'person',
+      entityId: id,
+      beforeData: existing as unknown as Record<string, unknown>,
+    });
     return result;
   }
 
@@ -277,15 +339,22 @@ export class GenealogyController {
   private async auditMutation(
     action: string,
     actor: RequestUser,
-    metadata?: Record<string, unknown>,
+    payload: Record<string, unknown> = {},
   ) {
+    const { entityType, entityId, beforeData, afterData, reason, ...metadata } =
+      payload;
     await this.auditLogService.create({
       action,
       actorUserId: actor.id,
       employeeCode: actor.employeeCode,
       success: true,
       important: true,
-      metadata,
+      entityType: entityType as string | undefined,
+      entityId: entityId as string | undefined,
+      beforeData: beforeData as Record<string, unknown> | undefined,
+      afterData: afterData as Record<string, unknown> | undefined,
+      reason: reason as string | undefined,
+      metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
     });
   }
 }
